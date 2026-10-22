@@ -36,7 +36,7 @@ public class ValidadorComprovante {
         }
 
         StatusValidacao status = pendencias.isEmpty() ? StatusValidacao.APROVADO : StatusValidacao.REPROVADO;
-        return new ResultadoValidacao(status, atendidas, pendencias);
+        return new ResultadoValidacao(status == StatusValidacao.APROVADO, status, atendidas, pendencias);
     }
 
     private static boolean preenchido(String valor) {
