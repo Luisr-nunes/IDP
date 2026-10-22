@@ -4,8 +4,8 @@ import java.time.LocalDate;
 
 public record DadosComprovante(
         String nome,
+        String cpf,
         String endereco,
-        String cep,
         String cidade,
         LocalDate dataEmissao
 ) {

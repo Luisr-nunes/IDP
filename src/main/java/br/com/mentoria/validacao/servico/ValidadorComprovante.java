@@ -24,19 +24,19 @@ public class ValidadorComprovante {
         List<String> pendencias = new ArrayList<>();
 
         checar(preenchido(dados.nome()), "Nome identificado", atendidas, pendencias);
-        checar(preenchido(dados.endereco()), "Endereco identificado", atendidas, pendencias);
+        checar(preenchido(dados.cpf()), "CPF encontrado", atendidas, pendencias);
+        checar(preenchido(dados.endereco()), "Endereco encontrado", atendidas, pendencias);
+        checar(preenchido(dados.cidade()), "Cidade encontrada", atendidas, pendencias);
 
         LocalDate emissao = dados.dataEmissao();
-        if (emissao == null) {
-            pendencias.add("Data de emissao nao reconhecida");
-        } else {
-            checar(!emissao.isAfter(hoje), "Data de emissao nao esta no futuro", atendidas, pendencias);
-            checar(!emissao.isBefore(hoje.minusDays(prazoEmissaoDias)),
-                    "Emissao dentro de " + prazoEmissaoDias + " dias", atendidas, pendencias);
-        }
+        checar(emissao != null, "Data de emissao reconhecida", atendidas, pendencias);
+        boolean dentroDoPrazo = emissao != null
+                && !emissao.isAfter(hoje)
+                && !emissao.isBefore(hoje.minusDays(prazoEmissaoDias));
+        checar(dentroDoPrazo, "Emissao dentro de " + prazoEmissaoDias + " dias", atendidas, pendencias);
 
         StatusValidacao status = pendencias.isEmpty() ? StatusValidacao.APROVADO : StatusValidacao.REPROVADO;
-        return new ResultadoValidacao(status, atendidas, pendencias);
+        return new ResultadoValidacao(status == StatusValidacao.APROVADO, status, atendidas, pendencias);
     }
 
     private static boolean preenchido(String valor) {
