@@ -1,5 +1,8 @@
 # IDP — Validação Inteligente de Documentos
 
+<!-- badges -->
+![Java](https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white) ![Maven](https://img.shields.io/badge/Maven-C71A36?style=flat-square&logo=apachemaven&logoColor=white) ![JUnit 5](https://img.shields.io/badge/JUnit%205-25A162?style=flat-square&logo=junit5&logoColor=white)
+
 [Read in English](README.en.md)
 
 API em Java e Spring Boot para validar documentos automaticamente: recebe um PDF ou imagem, trata a imagem, extrai o texto, estrutura os dados com IA e aplica regras de negócio para aprovar, reprovar ou encaminhar para revisão manual. Projeto da Mentoria Avanade 2026.2.
