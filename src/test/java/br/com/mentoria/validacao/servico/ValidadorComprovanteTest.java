@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ValidadorComprovanteTest {
 
@@ -17,7 +19,11 @@ class ValidadorComprovanteTest {
     @Test
     void aprovaComprovanteCompletoERecente() {
         var dados = new DadosComprovante("Joao da Silva", CPF, "Rua das Flores, 150", "Recife", HOJE.minusDays(10));
-        assertEquals(StatusValidacao.APROVADO, validador.validar(dados, HOJE).status());
+        var resultado = validador.validar(dados, HOJE);
+        assertEquals(StatusValidacao.APROVADO, resultado.status());
+        assertTrue(resultado.aprovado());
+        assertEquals(java.util.List.of("Nome identificado", "CPF encontrado", "Endereco encontrado",
+                "Cidade encontrada", "Data de emissao reconhecida", "Emissao dentro de 90 dias"), resultado.regrasAtendidas());
     }
 
     @Test
@@ -37,7 +43,15 @@ class ValidadorComprovanteTest {
         var dados = new DadosComprovante(" ", CPF, "Rua das Flores, 150", "Recife", null);
         var resultado = validador.validar(dados, HOJE);
         assertEquals(StatusValidacao.REPROVADO, resultado.status());
-        assertEquals(3, resultado.pendencias().size());
+        assertFalse(resultado.aprovado());
+        assertEquals(java.util.List.of("Falhou: Nome identificado", "Falhou: Data de emissao reconhecida",
+                "Falhou: Emissao dentro de 90 dias"), resultado.pendencias());
+    }
+
+    @Test
+    void reprovaSemCpf() {
+        var dados = new DadosComprovante("Joao da Silva", null, "Rua das Flores, 150", "Recife", HOJE);
+        assertEquals(java.util.List.of("Falhou: CPF encontrado"), validador.validar(dados, HOJE).pendencias());
     }
 
     @Test
