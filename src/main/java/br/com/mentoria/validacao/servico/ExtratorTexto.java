@@ -11,15 +11,17 @@ import java.util.regex.Pattern;
 public class ExtratorTexto {
 
     private static final Pattern NOME = rotulo("nome");
+    private static final Pattern ENDERECO = rotulo("endere[c\\u00e7]o");
+    private static final Pattern CIDADE = rotulo("cidade");
     private static final Pattern CPF = Pattern.compile("\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b");
 
     public DadosComprovante extrair(String texto) {
         String t = texto == null ? "" : texto;
-        return new DadosComprovante(valor(NOME, t), cpf(t), null, null, null);
+        return new DadosComprovante(valor(NOME, t), cpf(t), valor(ENDERECO, t), valor(CIDADE, t), null);
     }
 
     static Pattern rotulo(String regexRotulo) {
-        return Pattern.compile("(?im)^\\s*" + regexRotulo + "\\s*:\\s*(.+?)\\s*$");
+        return Pattern.compile("(?imu)^\\s*" + regexRotulo + "\\s*:\\s*(.+?)\\s*$");
     }
 
     static String valor(Pattern p, String texto) {
