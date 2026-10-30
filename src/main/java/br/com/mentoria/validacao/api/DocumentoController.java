@@ -1,6 +1,7 @@
 package br.com.mentoria.validacao.api;
 
 import br.com.mentoria.validacao.servico.ValidacaoDocumentoService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +28,7 @@ public class DocumentoController {
     }
 
     @PostMapping("/validar")
-    public ValidacaoResponse validar(@RequestBody ValidacaoRequest request) {
+    public ValidacaoResponse validar(@Valid @RequestBody ValidacaoRequest request) {
         return service.validar(request);
     }
 }
