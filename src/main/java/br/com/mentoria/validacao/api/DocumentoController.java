@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/api/documentos")
 public class DocumentoController {
@@ -28,7 +30,7 @@ public class DocumentoController {
     }
 
     @PostMapping("/validar")
-    public ValidacaoResponse validar(@Valid @RequestBody ValidacaoRequest request) {
+    public ValidacaoResponse validar(@Valid @RequestBody ValidacaoRequest request) throws IOException {
         return service.validar(request);
     }
 }
