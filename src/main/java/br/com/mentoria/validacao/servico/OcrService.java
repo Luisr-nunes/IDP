@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -31,6 +32,17 @@ public class OcrService {
 
     public boolean configurado() {
         return tessdataPath != null && !tessdataPath.isBlank();
+    }
+
+    /** Grava a imagem num arquivo temporario so durante o OCR; o arquivo e apagado mesmo se der erro. */
+    public String extrairTexto(byte[] imagem) throws IOException {
+        Path arquivo = Files.createTempFile("idp-ocr-", ".img");
+        try {
+            Files.write(arquivo, imagem);
+            return extrairTexto(arquivo);
+        } finally {
+            Files.deleteIfExists(arquivo);
+        }
     }
 
     /** Executa: tesseract IMAGEM stdout -l IDIOMA --tessdata-dir TESSDATA. */
