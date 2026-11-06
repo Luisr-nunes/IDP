@@ -1,8 +1,17 @@
 package br.com.mentoria.validacao.dominio;
 
+import java.util.regex.Pattern;
+
 public final class Cpf {
 
+    private static final Pattern NO_TEXTO = Pattern.compile("\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b");
+
     private Cpf() {
+    }
+
+    /** Troca cada CPF do texto por ***.***.***-** antes de o texto sair da aplicacao (por exemplo, para a IA). */
+    public static String mascarar(String texto) {
+        return texto == null ? null : NO_TEXTO.matcher(texto).replaceAll("***.***.***-**");
     }
 
     public static boolean digitosValidos(String cpf) {
