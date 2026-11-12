@@ -46,7 +46,7 @@ class DocumentoControllerTest {
                 "Rua das Flores, 150", "Guanambi - BA", LocalDate.of(2026, 8, 10));
         ResultadoValidacao resultado = new ResultadoValidacao(true, StatusValidacao.APROVADO,
                 List.of("Nome identificado"), List.of());
-        when(service.validar(any())).thenReturn(new ValidacaoResponse("doc.pdf",
+        when(service.validar(any())).thenReturn(new ValidacaoResponse(null, "doc.pdf",
                 List.of(new EtapaPipeline(1, "Documento", "Entrada do arquivo para o pipeline", "doc.pdf")),
                 dados, resultado));
 
