@@ -26,7 +26,7 @@ class OcrServiceTest {
 
     @Test
     void semOcrConfiguradoUsaConteudoDocumentoMesmoComImagem() throws IOException {
-        var service = new ValidacaoDocumentoService(new ExtratorTexto(), new ValidadorComprovante(90),
+        var service = new ValidacaoDocumentoService(new InterpretadorIaService("", new ExtratorTexto()), new ValidadorComprovante(90),
                 new OcrService("tesseract", "", "por"), new OpenCvService(""));
         String imagem = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3});
 
