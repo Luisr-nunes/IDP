@@ -39,10 +39,10 @@ class ValidadorComprovanteTest {
     }
 
     @Test
-    void reprovaSemNomeOuSemData() {
+    void revisaoManualSemNomeOuSemData() {
         var dados = new DadosComprovante(" ", CPF, "Rua das Flores, 150", "Recife", null);
         var resultado = validador.validar(dados, HOJE);
-        assertEquals(StatusValidacao.REPROVADO, resultado.status());
+        assertEquals(StatusValidacao.REVISAO_MANUAL, resultado.status());
         assertFalse(resultado.aprovado());
         assertEquals(java.util.List.of("Falhou: Nome identificado", "Falhou: Data de emissao reconhecida",
                 "Falhou: Emissao dentro de 90 dias"), resultado.pendencias());

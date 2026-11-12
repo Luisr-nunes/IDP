@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 public class ValidadorComprovante {
@@ -35,7 +36,12 @@ public class ValidadorComprovante {
                 && !emissao.isBefore(hoje.minusDays(prazoEmissaoDias));
         checar(dentroDoPrazo, "Emissao dentro de " + prazoEmissaoDias + " dias", atendidas, pendencias);
 
-        StatusValidacao status = pendencias.isEmpty() ? StatusValidacao.APROVADO : StatusValidacao.REPROVADO;
+        // extracao incerta: parte dos campos foi lida e parte nao (OCR ruim ou valor da IA descartado)
+        long encontrados = Stream.of(dados.nome(), dados.cpf(), dados.endereco(), dados.cidade())
+                .filter(ValidadorComprovante::preenchido).count() + (emissao != null ? 1 : 0);
+        StatusValidacao status = pendencias.isEmpty() ? StatusValidacao.APROVADO
+                : encontrados > 0 && encontrados < 5 ? StatusValidacao.REVISAO_MANUAL
+                : StatusValidacao.REPROVADO;
         return new ResultadoValidacao(status == StatusValidacao.APROVADO, status, atendidas, pendencias);
     }
 
