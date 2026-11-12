@@ -1,14 +1,18 @@
 package br.com.mentoria.validacao.api;
 
+import br.com.mentoria.validacao.persistencia.ValidacaoRegistro;
 import br.com.mentoria.validacao.servico.ValidacaoDocumentoService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/documentos")
@@ -30,7 +34,15 @@ public class DocumentoController {
     }
 
     @PostMapping("/validar")
-    public ValidacaoResponse validar(@Valid @RequestBody ValidacaoRequest request) throws IOException {
-        return service.validar(request);
+    public ResponseEntity<ValidacaoResponse> validar(@Valid @RequestBody ValidacaoRequest request) throws IOException {
+        ValidacaoResponse resposta = service.validar(request);
+        return resposta.id() == null ? ResponseEntity.ok(resposta)
+                : ResponseEntity.ok().location(URI.create("/api/documentos/" + resposta.id())).body(resposta);
+    }
+
+    /** Consulta o resultado salvo de uma validacao (sem texto do documento nem dados pessoais). */
+    @GetMapping("/{id}")
+    public ResponseEntity<ValidacaoRegistro> buscar(@PathVariable Long id) {
+        return ResponseEntity.of(service.buscar(id));
     }
 }

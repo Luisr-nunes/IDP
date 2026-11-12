@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Orquestra o pipeline: documento, pre-processamento, OCR, interpretacao e regras.
@@ -83,7 +84,8 @@ public class ValidacaoDocumentoService {
             dados = interpretador.extrairLocal(texto);
         }
         ResultadoValidacao resultado = validador.validar(dados, LocalDate.now());
-        registros.save(new ValidacaoRegistro(request.nomeArquivo(), resultado, Instant.now()));
+        var registro = new ValidacaoRegistro(request.nomeArquivo(), resultado, Instant.now());
+        registros.save(registro); // registro novo: o persist preenche o id na propria instancia
 
         List<EtapaPipeline> etapas = List.of(
                 new EtapaPipeline(1, "Documento", "Entrada do arquivo para o pipeline", request.nomeArquivo()),
@@ -92,7 +94,11 @@ public class ValidacaoDocumentoService {
                 new EtapaPipeline(4, "IA", "Interpretacao do texto em dados estruturados", resultadoIa),
                 new EtapaPipeline(5, "Regras", "Aplicacao das regras de negocio", resultado.status().name()));
 
-        return new ValidacaoResponse(request.nomeArquivo(), etapas, dados, resultado);
+        return new ValidacaoResponse(registro.getId(), request.nomeArquivo(), etapas, dados, resultado);
+    }
+
+    public Optional<ValidacaoRegistro> buscar(Long id) {
+        return registros.findById(id);
     }
 
     private static void falha(String etapa, Exception e) {
