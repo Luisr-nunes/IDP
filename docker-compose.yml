@@ -1,0 +1,22 @@
+# PostgreSQL para rodar a API com banco real (perfil prod).
+# A senha nao fica no repositorio: defina DB_PASSWORD antes de subir.
+#   $env:DB_PASSWORD="uma-senha-local"; docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-idp}
+      POSTGRES_USER: ${DB_USER:-idp}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina a variavel DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - idp-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  idp-postgres:
