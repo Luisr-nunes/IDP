@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configuracao padrao do Spring Boot, trocando a mensagem (%m / %msg) por uma versao com CPF mascarado -->
+<configuration>
+    <conversionRule conversionWord="m" class="br.com.mentoria.validacao.log.MascaraDadosPessoaisConverter"/>
+    <conversionRule conversionWord="msg" class="br.com.mentoria.validacao.log.MascaraDadosPessoaisConverter"/>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+</configuration>
