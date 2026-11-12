@@ -1,6 +1,7 @@
 package br.com.mentoria.validacao.servico;
 
 import br.com.mentoria.validacao.api.ValidacaoRequest;
+import br.com.mentoria.validacao.persistencia.ValidacaoRegistroRepository;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 /** Nao depende do Tesseract instalado: cobre a configuracao, o fallback e a limpeza do arquivo temporario. */
 class OcrServiceTest {
@@ -27,7 +29,7 @@ class OcrServiceTest {
     @Test
     void semOcrConfiguradoUsaConteudoDocumentoMesmoComImagem() throws IOException {
         var service = new ValidacaoDocumentoService(new InterpretadorIaService("", new ExtratorTexto()), new ValidadorComprovante(90),
-                new OcrService("tesseract", "", "por"), new OpenCvService(""));
+                new OcrService("tesseract", "", "por"), new OpenCvService(""), mock(ValidacaoRegistroRepository.class));
         String imagem = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3});
 
         var resposta = service.validar(new ValidacaoRequest("doc.png", "image/png", "Nome: Maria Souza", imagem));

@@ -5,11 +5,14 @@ import br.com.mentoria.validacao.api.ValidacaoResponse;
 import br.com.mentoria.validacao.dominio.DadosComprovante;
 import br.com.mentoria.validacao.dominio.EtapaPipeline;
 import br.com.mentoria.validacao.dominio.ResultadoValidacao;
+import br.com.mentoria.validacao.persistencia.ValidacaoRegistro;
+import br.com.mentoria.validacao.persistencia.ValidacaoRegistroRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
@@ -27,13 +30,15 @@ public class ValidacaoDocumentoService {
     private final ValidadorComprovante validador;
     private final OcrService ocr;
     private final OpenCvService openCv;
+    private final ValidacaoRegistroRepository registros;
 
     public ValidacaoDocumentoService(InterpretadorIaService interpretador, ValidadorComprovante validador,
-                                     OcrService ocr, OpenCvService openCv) {
+                                     OcrService ocr, OpenCvService openCv, ValidacaoRegistroRepository registros) {
         this.interpretador = interpretador;
         this.validador = validador;
         this.ocr = ocr;
         this.openCv = openCv;
+        this.registros = registros;
     }
 
     public ValidacaoResponse validar(ValidacaoRequest request) throws IOException {
@@ -78,6 +83,7 @@ public class ValidacaoDocumentoService {
             dados = interpretador.extrairLocal(texto);
         }
         ResultadoValidacao resultado = validador.validar(dados, LocalDate.now());
+        registros.save(new ValidacaoRegistro(request.nomeArquivo(), resultado, Instant.now()));
 
         List<EtapaPipeline> etapas = List.of(
                 new EtapaPipeline(1, "Documento", "Entrada do arquivo para o pipeline", request.nomeArquivo()),
