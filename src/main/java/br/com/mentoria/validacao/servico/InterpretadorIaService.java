@@ -46,8 +46,11 @@ public class InterpretadorIaService {
         return apiKey != null && !apiKey.isBlank();
     }
 
-    /** O texto vai para a IA com o CPF mascarado; o CPF e lido localmente. */
+    /** O texto vai para a IA com o CPF mascarado; o CPF e lido localmente. Sem chave, extrai tudo por regex. */
     public DadosComprovante interpretar(String texto) throws IOException {
+        if (!configurado()) {
+            return extrator.extrair(texto);
+        }
         JsonNode campos = json.readTree(chamarOpenAi(Cpf.mascarar(texto == null ? "" : texto)));
         return new DadosComprovante(texto(campos, "nome"), extrator.extrair(texto).cpf(), texto(campos, "endereco"),
                 texto(campos, "cidade"), data(texto(campos, "dataEmissao")));
