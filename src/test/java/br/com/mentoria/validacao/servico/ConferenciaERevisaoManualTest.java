@@ -4,6 +4,7 @@ import br.com.mentoria.validacao.api.ValidacaoRequest;
 import br.com.mentoria.validacao.dominio.DadosComprovante;
 import br.com.mentoria.validacao.dominio.StatusValidacao;
 import br.com.mentoria.validacao.dominio.Texto;
+import br.com.mentoria.validacao.persistencia.ValidacaoRegistroRepository;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.util.Base64;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 /** Conferencia anti-alucinacao dos valores da IA, revisao manual e fallback quando um processo externo falha. */
 class ConferenciaERevisaoManualTest {
@@ -65,7 +67,7 @@ class ConferenciaERevisaoManualTest {
     @Test
     void falhaDoTesseractCaiNoConteudoDocumento() throws IOException {
         var service = new ValidacaoDocumentoService(new InterpretadorIaService("", new ExtratorTexto()), validador,
-                new OcrService("comando-inexistente-idp", "C:/tessdata", "por"), new OpenCvService(""));
+                new OcrService("comando-inexistente-idp", "C:/tessdata", "por"), new OpenCvService(""), mock(ValidacaoRegistroRepository.class));
         String imagem = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3});
 
         var resposta = service.validar(new ValidacaoRequest("doc.png", "image/png", "Nome: Maria Souza", imagem));
