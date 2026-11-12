@@ -2,6 +2,7 @@ package br.com.mentoria.validacao.servico;
 
 import br.com.mentoria.validacao.dominio.Cpf;
 import br.com.mentoria.validacao.dominio.DadosComprovante;
+import br.com.mentoria.validacao.dominio.Texto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -18,7 +19,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
-import java.util.Locale;
 
 /** Interpreta o texto do OCR com a OpenAI, pedindo um JSON estruturado com os campos do comprovante. */
 @Service
@@ -64,11 +64,7 @@ public class InterpretadorIaService {
 
     /** Anti-alucinacao: so aceita o valor da IA se ele aparece no texto do documento. */
     static String noTexto(String valor, String texto) {
-        return valor != null && normalizar(texto).contains(normalizar(valor)) ? valor : null;
-    }
-
-    private static String normalizar(String s) {
-        return s.toLowerCase(Locale.ROOT).replaceAll("\\s+", " ").trim();
+        return valor != null && Texto.normalizar(texto).contains(Texto.normalizar(valor)) ? valor : null;
     }
 
     private String chamarOpenAi(String textoMascarado) throws IOException {
