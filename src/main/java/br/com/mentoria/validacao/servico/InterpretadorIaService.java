@@ -50,7 +50,7 @@ public class InterpretadorIaService {
     /** O texto vai para a IA com o CPF mascarado; o CPF e lido localmente. Sem chave, extrai tudo por regex. */
     public DadosComprovante interpretar(String texto) throws IOException {
         if (!configurado()) {
-            return extrator.extrair(texto);
+            return extrairLocal(texto);
         }
         String original = texto == null ? "" : texto;
         JsonNode campos = json.readTree(chamarOpenAi(Cpf.mascarar(original)));
@@ -60,6 +60,11 @@ public class InterpretadorIaService {
                 noTexto(texto(campos, "endereco"), original),
                 noTexto(texto(campos, "cidade"), original),
                 data(noTexto(texto(campos, "dataEmissao"), original)));
+    }
+
+    /** Fallback sem IA: extracao local por palavra-chave e regex. */
+    public DadosComprovante extrairLocal(String texto) {
+        return extrator.extrair(texto);
     }
 
     /** Anti-alucinacao: so aceita o valor da IA se ele aparece no texto do documento. */
