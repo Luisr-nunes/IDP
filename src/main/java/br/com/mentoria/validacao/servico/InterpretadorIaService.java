@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
+import java.util.Locale;
 
 /** Interpreta o texto do OCR com a OpenAI, pedindo um JSON estruturado com os campos do comprovante. */
 @Service
@@ -51,9 +52,23 @@ public class InterpretadorIaService {
         if (!configurado()) {
             return extrator.extrair(texto);
         }
-        JsonNode campos = json.readTree(chamarOpenAi(Cpf.mascarar(texto == null ? "" : texto)));
-        return new DadosComprovante(texto(campos, "nome"), extrator.extrair(texto).cpf(), texto(campos, "endereco"),
-                texto(campos, "cidade"), data(texto(campos, "dataEmissao")));
+        String original = texto == null ? "" : texto;
+        JsonNode campos = json.readTree(chamarOpenAi(Cpf.mascarar(original)));
+        return new DadosComprovante(
+                noTexto(texto(campos, "nome"), original),
+                extrator.extrair(original).cpf(),
+                noTexto(texto(campos, "endereco"), original),
+                noTexto(texto(campos, "cidade"), original),
+                data(noTexto(texto(campos, "dataEmissao"), original)));
+    }
+
+    /** Anti-alucinacao: so aceita o valor da IA se ele aparece no texto do documento. */
+    static String noTexto(String valor, String texto) {
+        return valor != null && normalizar(texto).contains(normalizar(valor)) ? valor : null;
+    }
+
+    private static String normalizar(String s) {
+        return s.toLowerCase(Locale.ROOT).replaceAll("\\s+", " ").trim();
     }
 
     private String chamarOpenAi(String textoMascarado) throws IOException {
