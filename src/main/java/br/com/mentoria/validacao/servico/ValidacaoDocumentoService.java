@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,7 +49,7 @@ public class ValidacaoDocumentoService {
         String resultadoOcr = "OCR nao configurado: usando conteudoDocumento (" + conteudo.length() + " caracteres)";
 
         if (temImagem && ocr.configurado()) {
-            byte[] imagem = Base64.getMimeDecoder().decode(request.imagemBase64());
+            byte[] imagem = request.decodificarImagem();
             if (openCv.configurado()) {
                 try {
                     imagem = openCv.preprocessar(imagem);

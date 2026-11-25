@@ -63,6 +63,19 @@ class RequisicaoInvalidaTest {
     }
 
     @Test
+    void rejeitaImagemQueNaoEBase64() throws Exception {
+        validar("{\"mimeType\":\"image/png\",\"imagemBase64\":\"isto nao e base64!\"}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erros", hasItem("imagemBase64 nao e um Base64 valido")));
+    }
+
+    @Test
+    void aceitaBase64ComQuebraDeLinha() throws Exception {
+        validar("{\"mimeType\":\"image/png\",\"imagemBase64\":\"AQID\\nBAU=\"}")
+                .andExpect(jsonPath("$.erros").doesNotExist());
+    }
+
+    @Test
     void jsonMalFormadoNaoEcoaOConteudoEnviado() throws Exception {
         validar("{\"conteudoDocumento\":\"CPF 529.982.247-25\"")
                 .andExpect(status().isBadRequest())
