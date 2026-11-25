@@ -44,6 +44,7 @@ Abra `http://localhost:8080`. O analista envia o comprovante e o RG/CNH por arqu
 | `POST` | `/api/documentos/validar` | Executa o pipeline e devolve etapas, dados extraídos e resultado |
 | `GET` | `/api/documentos/{id}` | Consulta o resultado salvo de uma validação |
 | `GET` | `/api/documentos` | Histórico das 20 validações mais recentes |
+| `POST` | `/api/documentos/{id}/revisao` | Analista aprova ou reprova um documento em revisão manual (`decisao` e `motivo`) |
 
 Request de `POST /api/documentos/validar` (em cada documento, envie `conteudoDocumento`, `imagemBase64` ou ambos; `identificacao` é opcional):
 
@@ -98,7 +99,7 @@ Status:
 
 - `APROVADO`: todas as regras atendidas.
 - `REPROVADO`: documento ilegível, CPF inválido, emissão fora do prazo, nome ou CPF divergente, CNH vencida, ou nada extraído. A resposta sempre traz o motivo em `pendencias`.
-- `REVISAO_MANUAL`: extração incerta, só parte dos campos foi encontrada (OCR ruim ou valor da IA descartado).
+- `REVISAO_MANUAL`: extração incerta, só parte dos campos foi encontrada (OCR ruim ou valor da IA descartado). O analista confere o original e aprova ou reprova pela tela (ou pela API), com motivo obrigatório; a decisão fica no histórico.
 
 ## Como executar
 
@@ -148,8 +149,8 @@ Variáveis do perfil prod: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` e `DB_PASS
 2. Clique em **Usar exemplo** e depois em **Validar documentos**: comprovante e CNH aprovados, com as 6 etapas e as regras.
 3. Na CNH, troque o nome ou o CPF e valide de novo: **Reprovado** por divergência entre os documentos.
 4. Troque a validade da CNH ou a data de emissão por uma antiga: **Reprovado** com o motivo.
-5. Apague linhas do comprovante: **Revisão manual**.
-6. Envie um PDF real na aba **Arquivo**: o texto é lido direto do PDF, sem OCR.
+5. Apague linhas do comprovante: **Revisão manual**. Clique em **Revisar agora**, escreva o motivo e aprove ou reprove; a decisão aparece no histórico.
+6. Envie um PDF real (boleto ou conta de consumo) na aba **Arquivo**: o texto é lido direto do PDF, sem OCR, e nome, CPF, endereço, cidade, CEP e emissão são encontrados mesmo sem o formato `Rótulo: valor`.
 7. Mostre o **Histórico** e a consulta pela API (`GET /api/documentos/{id}`).
 8. Com `OPENAI_API_KEY` e Tesseract configurados, repita com uma foto do documento para mostrar OCR e IA reais.
 

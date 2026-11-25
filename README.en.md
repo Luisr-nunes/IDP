@@ -44,6 +44,7 @@ Open `http://localhost:8080`. The analyst uploads the proof of address and the R
 | `POST` | `/api/documentos/validar` | Runs the pipeline and returns steps, extracted data and result |
 | `GET` | `/api/documentos/{id}` | Saved result of one validation |
 | `GET` | `/api/documentos` | The 20 most recent validations |
+| `POST` | `/api/documentos/{id}/revisao` | Analyst approves or rejects a document in manual review (`decisao` and `motivo`) |
 
 `POST /api/documentos/validar` body (for each document send `conteudoDocumento`, `imagemBase64` or both; `identificacao` is optional):
 
@@ -72,7 +73,7 @@ Status:
 
 - `APROVADO`: every rule met.
 - `REPROVADO`: unreadable document, invalid CPF, issue date out of range, name or CPF mismatch, expired CNH, or nothing extracted. The reason is always in `pendencias`.
-- `REVISAO_MANUAL`: uncertain extraction, only some fields were found (poor OCR or AI value discarded).
+- `REVISAO_MANUAL`: uncertain extraction, only some fields were found (poor OCR or AI value discarded). The analyst checks the original and approves or rejects it on the page (or via the API) with a required reason, which is kept in the history.
 
 ## Running
 
@@ -110,8 +111,8 @@ prod variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` (re
 2. Click **Usar exemplo**, then **Validar documentos**: approved, with the 6 steps and the rules.
 3. Change the name or CPF on the CNH: rejected for mismatch between documents.
 4. Use an old CNH expiry or issue date: rejected, with the reason.
-5. Delete lines from the proof of address: manual review.
-6. Upload a real PDF in the **Arquivo** tab: text is read straight from the PDF, no OCR.
+5. Delete lines from the proof of address: manual review. Click **Revisar agora**, write the reason and approve or reject; the decision shows in the history.
+6. Upload a real PDF (bank slip or utility bill) in the **Arquivo** tab: text is read straight from the PDF, and name, CPF, address, city, CEP and issue date are found even without the `Label: value` format.
 7. Show the history and the API query (`GET /api/documentos/{id}`).
 8. With `OPENAI_API_KEY` and Tesseract configured, repeat with a photo to show real OCR and AI.
 
