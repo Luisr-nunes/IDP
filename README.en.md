@@ -35,6 +35,12 @@ The response shows, in `etapas`, which path each of the 6 steps took.
 
 Open `http://localhost:8080`. The analyst uploads the proof of address and the RG/CNH as a file (PDF, PNG or JPG up to 5 MB) or pastes the text, and sees the status, the pipeline steps, the data read from each document, the rules met and failed, and the history of recent validations. Notion-style, with automatic dark mode.
 
+## Database page
+
+`http://localhost:8080/banco.html` (**Banco de Dados** menu) lists every saved validation: number, file, status, name, CPF, city, pending items and date. Each row expands to the full data from the proof of address, the RG/CNH and the manual review. Filter by status, search by name, CPF or file, and **download as JSON** (all records or one) to migrate into another system's database.
+
+In the dev profile H2 is stored in `data/idp.mv.db`, so records survive restarts. Delete `data/` to start fresh.
+
 ## Endpoints
 
 | Method | Route | Description |
@@ -44,6 +50,8 @@ Open `http://localhost:8080`. The analyst uploads the proof of address and the R
 | `POST` | `/api/documentos/validar` | Runs the pipeline and returns steps, extracted data and result |
 | `GET` | `/api/documentos/{id}` | Saved result of one validation |
 | `GET` | `/api/documentos` | The 20 most recent validations |
+| `GET` | `/api/banco` | Records with the extracted data (database page) |
+| `GET` | `/api/banco/exportar` | JSON download of every record, for migration |
 | `POST` | `/api/documentos/{id}/revisao` | Analyst approves or rejects a document in manual review (`decisao` and `motivo`) |
 
 `POST /api/documentos/validar` body (for each document send `conteudoDocumento`, `imagemBase64` or both; `identificacao` is optional):
@@ -103,7 +111,7 @@ $env:SPRING_PROFILES_ACTIVE="prod"
 ./mvnw spring-boot:run
 ```
 
-prod variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` (required).
+prod variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` and `APP_DADOS_CHAVE` (the last two required; the key is Base64 of 32 bytes, e.g. `openssl rand -base64 32`).
 
 ## Demo flow
 
@@ -113,7 +121,7 @@ prod variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` (re
 4. Use an old CNH expiry or issue date: rejected, with the reason.
 5. Delete lines from the proof of address: manual review. Click **Revisar agora**, write the reason and approve or reject; the decision shows in the history.
 6. Upload a real PDF (bank slip or utility bill) in the **Arquivo** tab: text is read straight from the PDF, and name, CPF, address, city, CEP and issue date are found even without the `Label: value` format.
-7. Show the history and the API query (`GET /api/documentos/{id}`).
+7. Show the history, open the **Banco de Dados** page, expand a record and click **Baixar JSON**.
 8. With `OPENAI_API_KEY` and Tesseract configured, repeat with a photo to show real OCR and AI.
 
 ## Technical decisions
@@ -124,7 +132,7 @@ prod variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` (re
 - **Local cross-check**: RG and CNH have fixed labels, so name, CPF and expiry are read by regex and the ID document is never sent to the AI.
 - **Privacy with the AI**: CPFs are masked before the text goes to OpenAI and read locally.
 - **Anti-hallucination**: AI values are only accepted if they appear in the document text.
-- **Data minimisation**: the database stores only file name, status, pending items and date; never the text, image, name, CPF or address.
+- **Encrypted personal data**: extracted data (name, CPF, address, CEP, issue date and RG/CNH data) is stored with AES-256-GCM in its own column, so the database file only holds ciphertext. The key comes from `APP_DADOS_CHAVE` (in dev it is generated once in `data/chave-dev.key`, outside Git). The full text and image are never stored, and the main page history and `GET /api/documentos/{id}` show no personal data.
 - **Front-end safety**: API data reaches the page only through `textContent`, never `innerHTML`; input is validated on the server (type, size and Base64).
 - **Logs**: errors log only the exception type, and a Logback converter masks any CPF in a message.
 - **Secrets**: AI key and database password only from environment variables.
