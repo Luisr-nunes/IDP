@@ -2,7 +2,9 @@ package br.com.mentoria.validacao.servico;
 
 import br.com.mentoria.validacao.api.ValidacaoRequest;
 import br.com.mentoria.validacao.api.ValidacaoResponse;
+import br.com.mentoria.validacao.api.DocumentoIdentificacao;
 import br.com.mentoria.validacao.dominio.DadosComprovante;
+import br.com.mentoria.validacao.dominio.DadosIdentificacao;
 import br.com.mentoria.validacao.dominio.EtapaPipeline;
 import br.com.mentoria.validacao.dominio.ResultadoValidacao;
 import br.com.mentoria.validacao.persistencia.ValidacaoRegistro;
@@ -31,11 +33,13 @@ public class ValidacaoDocumentoService {
     private final OcrService ocr;
     private final OpenCvService openCv;
     private final PdfService pdf;
+    private final ExtratorTexto extrator;
     private final ValidacaoRegistroRepository registros;
 
     public ValidacaoDocumentoService(InterpretadorIaService interpretador, ValidadorComprovante validador,
                                      OcrService ocr, OpenCvService openCv, PdfService pdf,
-                                     ValidacaoRegistroRepository registros) {
+                                     ExtratorTexto extrator, ValidacaoRegistroRepository registros) {
+        this.extrator = extrator;
         this.interpretador = interpretador;
         this.validador = validador;
         this.ocr = ocr;
@@ -51,6 +55,9 @@ public class ValidacaoDocumentoService {
     public ValidacaoResponse validar(ValidacaoRequest request) throws IOException {
         Leitura leitura = ler(request.mimeType(), request.conteudoDocumento(),
                 temTexto(request.imagemBase64()) ? request.decodificarImagem() : null);
+        DocumentoIdentificacao docId = request.identificacao();
+        Leitura leituraId = docId == null ? null : ler(docId.mimeType(), docId.conteudoDocumento(),
+                temTexto(docId.imagemBase64()) ? docId.decodificarImagem() : null);
 
         DadosComprovante dados;
         String resultadoIa = "Chave da IA nao configurada: extracao local por regex";
@@ -66,18 +73,31 @@ public class ValidacaoDocumentoService {
         } else {
             dados = interpretador.extrairLocal(leitura.texto());
         }
-        ResultadoValidacao resultado = validador.validar(dados, LocalDate.now());
+        // RG/CNH tem layout fixo de rotulos: nome, CPF e validade saem por regex, sem enviar o documento a IA
+        DadosIdentificacao identificacao = leituraId == null ? null : extrator.extrairIdentificacao(leituraId.texto());
+
+        ResultadoValidacao resultado = validador.validar(dados, leitura.texto().strip().length(), identificacao,
+                leituraId == null ? null : leituraId.texto().strip().length(), LocalDate.now());
         var registro = new ValidacaoRegistro(request.nomeArquivo(), resultado, Instant.now());
         registros.save(registro); // registro novo: o persist preenche o id na propria instancia
 
+        String documentos = identificacao == null ? request.nomeArquivo()
+                : request.nomeArquivo() + " + " + (docId.nomeArquivo() == null ? identificacao.tipo() : docId.nomeArquivo());
         List<EtapaPipeline> etapas = List.of(
-                new EtapaPipeline(1, "Documento", "Entrada do arquivo para o pipeline", request.nomeArquivo()),
-                new EtapaPipeline(2, "OpenCV", "Pre-processamento da imagem", leitura.openCv()),
-                new EtapaPipeline(3, "Tesseract", "Extracao do texto", leitura.ocr()),
-                new EtapaPipeline(4, "IA", "Interpretacao do texto em dados estruturados", resultadoIa),
-                new EtapaPipeline(5, "Regras", "Aplicacao das regras de negocio", resultado.status().name()));
+                new EtapaPipeline(1, "Documento", "Entrada do arquivo para o pipeline", documentos),
+                new EtapaPipeline(2, "OpenCV", "Pre-processamento da imagem", juntar(leitura.openCv(), leituraId, Leitura::openCv)),
+                new EtapaPipeline(3, "Tesseract", "Extracao do texto", juntar(leitura.ocr(), leituraId, Leitura::ocr)),
+                new EtapaPipeline(4, "IA", "Interpretacao do texto em dados estruturados",
+                        leituraId == null ? resultadoIa : resultadoIa + " | " + identificacao.tipo() + ": extracao local por regex"),
+                new EtapaPipeline(5, "Regras", "Aplicacao das regras de negocio", resultado.status().name()),
+                new EtapaPipeline(6, "Banco", "Resultado salvo para consulta",
+                        registro.getId() == null ? "Nao salvo" : "Registro " + registro.getId() + " salvo"));
 
-        return new ValidacaoResponse(registro.getId(), request.nomeArquivo(), etapas, dados, resultado);
+        return new ValidacaoResponse(registro.getId(), request.nomeArquivo(), etapas, dados, identificacao, resultado);
+    }
+
+    private static String juntar(String comprovante, Leitura id, java.util.function.Function<Leitura, String> campo) {
+        return id == null || comprovante.equals(campo.apply(id)) ? comprovante : "Comprovante: " + comprovante + " | Identificacao: " + campo.apply(id);
     }
 
     public Optional<ValidacaoRegistro> buscar(Long id) {

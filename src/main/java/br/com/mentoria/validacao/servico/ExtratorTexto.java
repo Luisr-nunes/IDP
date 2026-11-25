@@ -1,6 +1,8 @@
 package br.com.mentoria.validacao.servico;
 
 import br.com.mentoria.validacao.dominio.DadosComprovante;
+import br.com.mentoria.validacao.dominio.DadosIdentificacao;
+import br.com.mentoria.validacao.dominio.Texto;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -18,6 +20,7 @@ public class ExtratorTexto {
     private static final Pattern ENDERECO = rotulo("endere[c\\u00e7]o");
     private static final Pattern CIDADE = rotulo("cidade");
     private static final Pattern DATA_EMISSAO = rotulo("data de emiss[a\\u00e3]o");
+    private static final Pattern VALIDADE = rotulo("validade");
     private static final DateTimeFormatter DD_MM_AAAA =
             DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT);
     private static final Pattern CPF = Pattern.compile("\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b");
@@ -25,6 +28,14 @@ public class ExtratorTexto {
     public DadosComprovante extrair(String texto) {
         String t = texto == null ? "" : texto;
         return new DadosComprovante(valor(NOME, t), cpf(t), valor(ENDERECO, t), valor(CIDADE, t), data(valor(DATA_EMISSAO, t)));
+    }
+
+    /** RG ou CNH: nome, CPF e, na CNH, a validade. */
+    public DadosIdentificacao extrairIdentificacao(String texto) {
+        String t = texto == null ? "" : texto;
+        String normalizado = Texto.normalizar(t);
+        String tipo = normalizado.contains("HABILITACAO") || normalizado.matches("(?s).*\\bCNH\\b.*") ? "CNH" : "RG";
+        return new DadosIdentificacao(tipo, valor(NOME, t), cpf(t), data(valor(VALIDADE, t)));
     }
 
     static Pattern rotulo(String regexRotulo) {

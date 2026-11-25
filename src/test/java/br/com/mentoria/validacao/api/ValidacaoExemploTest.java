@@ -32,13 +32,16 @@ class ValidacaoExemploTest {
         mvc.perform(post("/api/documentos/validar").contentType(MediaType.APPLICATION_JSON).content(exemplo))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nomeArquivo").value("comprovante-residencia.pdf"))
-                .andExpect(jsonPath("$.etapas", hasSize(5)))
+                .andExpect(jsonPath("$.etapas", hasSize(6)))
                 .andExpect(jsonPath("$.dadosExtraidos.nome").value("Joao da Silva"))
                 .andExpect(jsonPath("$.dadosExtraidos.cpf").value("529.982.247-25"))
                 .andExpect(jsonPath("$.dadosExtraidos.endereco").value("Rua das Flores, 150"))
                 .andExpect(jsonPath("$.dadosExtraidos.cidade").value("Guanambi - BA"))
                 .andExpect(jsonPath("$.dadosExtraidos.dataEmissao").value(LocalDate.now().minusDays(10).toString()))
                 .andExpect(jsonPath("$.resultado.status").value("APROVADO"))
+                .andExpect(jsonPath("$.identificacao.tipo").value("CNH"))
+                .andExpect(jsonPath("$.resultado.regrasAtendidas", hasItems("Documento legivel", "CNH legivel",
+                        "Nome igual no comprovante e na CNH", "CPF igual no comprovante e na CNH", "CNH dentro da validade")))
                 .andExpect(jsonPath("$.resultado.regrasAtendidas", hasItems("Nome identificado", "CPF encontrado", "CPF valido",
                         "Endereco encontrado", "Cidade encontrada", "Data de emissao reconhecida")));
     }
