@@ -3,6 +3,9 @@ package br.com.mentoria.validacao.servico;
 import br.com.mentoria.validacao.api.ValidacaoRequest;
 import br.com.mentoria.validacao.api.ValidacaoResponse;
 import br.com.mentoria.validacao.api.DocumentoIdentificacao;
+import br.com.mentoria.validacao.api.RevisaoRequest;
+import br.com.mentoria.validacao.dominio.Cpf;
+import br.com.mentoria.validacao.dominio.StatusValidacao;
 import br.com.mentoria.validacao.dominio.DadosComprovante;
 import br.com.mentoria.validacao.dominio.DadosIdentificacao;
 import br.com.mentoria.validacao.dominio.EtapaPipeline;
@@ -12,6 +15,7 @@ import br.com.mentoria.validacao.persistencia.ValidacaoRegistroRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -102,6 +106,18 @@ public class ValidacaoDocumentoService {
 
     public Optional<ValidacaoRegistro> buscar(Long id) {
         return registros.findById(id);
+    }
+
+    /**
+     * Registra a decisao do analista. Vazio se o id nao existe; IllegalStateException se o documento
+     * nao esta em revisao manual. O CPF digitado no motivo e mascarado antes de salvar.
+     */
+    @Transactional
+    public Optional<ValidacaoRegistro> revisar(Long id, RevisaoRequest revisao) {
+        return registros.findById(id).map(registro -> {
+            registro.revisar(StatusValidacao.valueOf(revisao.decisao()), Cpf.mascarar(revisao.motivo().strip()), Instant.now());
+            return registros.save(registro);
+        });
     }
 
     /** As 20 validacoes mais recentes, para o historico da tela. */
