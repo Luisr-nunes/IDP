@@ -83,6 +83,24 @@
 
         <h3 class="rotulo">Regras</h3>
         <ul id="regras" class="regras"></ul>
+        <div id="chamada-revisao" class="chamada" hidden>
+            <span>Este documento precisa de uma decisão do analista.</span>
+            <button type="button" id="abrir-revisao" class="secundario pequeno">Revisar agora</button>
+        </div>
+    </section>
+
+    <section id="revisao" class="bloco" aria-labelledby="t-revisao" hidden>
+        <h2 id="t-revisao">Revisão manual</h2>
+        <p class="sub">O sistema não conseguiu ler todos os campos com segurança. Confira o documento original e registre a decisão.</p>
+        <p id="revisao-doc" class="revisao-doc"></p>
+        <label class="campo-rotulo" for="motivo">Motivo da decisão</label>
+        <textarea id="motivo" rows="3" maxlength="500" placeholder="Ex.: conferi o endereço no documento original"></textarea>
+        <div class="acoes">
+            <button type="button" id="aprovar" class="primario">Aprovar</button>
+            <button type="button" id="reprovar" class="perigo">Reprovar</button>
+            <button type="button" id="cancelar-revisao" class="secundario">Cancelar</button>
+        </div>
+        <p id="aviso-revisao" class="aviso" role="alert" hidden></p>
     </section>
 
     <section class="bloco" aria-labelledby="t-historico">
@@ -90,10 +108,10 @@
             <h2 id="t-historico">Histórico</h2>
             <button type="button" id="atualizar" class="secundario pequeno">Atualizar</button>
         </div>
-        <p class="sub">Últimas 20 validações. Só o resultado é guardado: o texto e os dados pessoais dos documentos não ficam salvos.</p>
+        <p class="sub">Últimas 20 validações. Só o resultado é guardado: o texto e os dados pessoais dos documentos não ficam salvos. Documentos em revisão manual podem ser decididos aqui.</p>
         <div class="tabela-rolagem">
             <table class="tabela">
-                <thead><tr><th>#</th><th>Arquivo</th><th>Status</th><th>Pendências</th><th>Quando</th></tr></thead>
+                <thead><tr><th>#</th><th>Arquivo</th><th>Status</th><th>Pendências</th><th>Quando</th><th></th></tr></thead>
                 <tbody id="historico"></tbody>
             </table>
         </div>

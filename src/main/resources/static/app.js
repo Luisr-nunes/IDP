@@ -11,6 +11,8 @@ const STATUS = { APROVADO: 'Aprovado', REPROVADO: 'Reprovado', REVISAO_MANUAL: '
 
 const $ = (sel, raiz = document) => raiz.querySelector(sel);
 const docs = {};
+let ultimo = null;      // ultima validacao mostrada: {id, nomeArquivo}
+let emRevisao = null;   // documento aberto no painel de revisao: {id, nomeArquivo}
 
 function el(tag, classe, texto) {
     const e = document.createElement(tag);
@@ -120,6 +122,8 @@ async function validar() {
             const erros = Array.isArray(corpo.erros) ? corpo.erros.join('\n') : (corpo.detail || 'Erro ao validar.');
             return avisar(erros);
         }
+        const location = resposta.headers.get('Location');
+        ultimo = { id: location ? Number(location.split('/').pop()) : null, nomeArquivo: corpo.nomeArquivo };
         mostrar(corpo);
         carregarHistorico();
     } catch (e) {
@@ -176,6 +180,9 @@ function mostrar(r) {
     r.resultado.regrasAtendidas.forEach(t => item(t, true));
     r.resultado.pendencias.forEach(t => item(t.replace(/^Falhou: /, ''), false));
 
+    $('#chamada-revisao').hidden = status !== 'REVISAO_MANUAL' || !ultimo || !ultimo.id;
+    $('#revisao').hidden = true;
+
     const secao = $('#resultado');
     secao.hidden = false;
     secao.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
@@ -189,7 +196,7 @@ async function carregarHistorico() {
         if (!lista.length) {
             const tr = el('tr');
             const td = el('td', 'vazio', 'Nenhuma validação ainda.');
-            td.colSpan = 5;
+            td.colSpan = 6;
             tr.append(td);
             return corpo.append(tr);
         }
@@ -197,13 +204,74 @@ async function carregarHistorico() {
             const tr = el('tr');
             const status = el('td');
             status.append(el('span', 'tag ' + v.status, STATUS[v.status] || v.status));
-            tr.append(el('td', 'num', v.id), el('td', null, v.nomeArquivo || '-'), status,
-                el('td', null, v.pendencias.length ? v.pendencias.map(p => p.replace(/^Falhou: /, '')).join('; ') : '-'),
-                el('td', null, new Date(v.criadoEm).toLocaleString('pt-BR')));
+            if (v.revisadoManualmente) status.append(el('span', 'revisado', 'decidido pelo analista'));
+            const pendencias = v.pendencias.length ? v.pendencias.map(p => p.replace(/^Falhou: /, '')).join('; ') : '-';
+            const detalhe = el('td', null, pendencias);
+            if (v.motivoRevisao) detalhe.append(el('span', 'revisado', 'Motivo: ' + v.motivoRevisao));
+            const acao = el('td');
+            if (v.status === 'REVISAO_MANUAL') {
+                const botao = el('button', 'secundario pequeno', 'Revisar');
+                botao.type = 'button';
+                botao.addEventListener('click', () => abrirRevisao({ id: v.id, nomeArquivo: v.nomeArquivo }));
+                acao.append(botao);
+            }
+            tr.append(el('td', 'num', v.id), el('td', null, v.nomeArquivo || '-'), status, detalhe,
+                el('td', null, new Date(v.criadoEm).toLocaleString('pt-BR')), acao);
             corpo.append(tr);
         });
     } catch (e) {
         corpo.replaceChildren();
+    }
+}
+
+function abrirRevisao(doc) {
+    emRevisao = doc;
+    $('#revisao-doc').textContent = '#' + doc.id + ' ' + (doc.nomeArquivo || '');
+    $('#motivo').value = '';
+    const aviso = $('#aviso-revisao');
+    aviso.hidden = true;
+    aviso.className = 'aviso';
+    const secao = $('#revisao');
+    secao.hidden = false;
+    secao.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    $('#motivo').focus({ preventScroll: true });
+}
+
+async function decidir(decisao) {
+    const aviso = $('#aviso-revisao');
+    const motivo = $('#motivo').value.trim();
+    aviso.className = 'aviso';
+    if (!motivo) {
+        aviso.hidden = false;
+        aviso.textContent = 'Escreva o motivo da decisão.';
+        return;
+    }
+    try {
+        const resposta = await fetch('/api/documentos/' + encodeURIComponent(emRevisao.id) + '/revisao', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ decisao, motivo })
+        });
+        const corpo = await resposta.json().catch(() => ({}));
+        if (!resposta.ok) {
+            aviso.hidden = false;
+            aviso.textContent = Array.isArray(corpo.erros) ? corpo.erros.join('\n') : (corpo.detail || 'Erro ao registrar a decisão.');
+            return;
+        }
+        if (ultimo && ultimo.id === emRevisao.id) {
+            const tag = $('#status');
+            tag.className = 'tag ' + corpo.status;
+            tag.textContent = STATUS[corpo.status] + ' na revisão manual';
+            $('#chamada-revisao').hidden = true;
+        }
+        aviso.hidden = false;
+        aviso.className = 'ok-revisao';
+        aviso.textContent = decisao === 'APROVADO' ? 'Documento aprovado na revisão manual.' : 'Documento reprovado na revisão manual.';
+        setTimeout(() => { $('#revisao').hidden = true; }, 1500);
+        carregarHistorico();
+    } catch (e) {
+        aviso.hidden = false;
+        aviso.textContent = 'Nao foi possivel falar com o servidor.';
     }
 }
 
@@ -230,6 +298,11 @@ $('#limpar').addEventListener('click', () => {
     docs.identificacao.limpar();
     avisar(null);
     $('#resultado').hidden = true;
+    $('#revisao').hidden = true;
 });
 $('#atualizar').addEventListener('click', carregarHistorico);
+$('#abrir-revisao').addEventListener('click', () => abrirRevisao(ultimo));
+$('#aprovar').addEventListener('click', () => decidir('APROVADO'));
+$('#reprovar').addEventListener('click', () => decidir('REPROVADO'));
+$('#cancelar-revisao').addEventListener('click', () => { $('#revisao').hidden = true; });
 carregarHistorico();
