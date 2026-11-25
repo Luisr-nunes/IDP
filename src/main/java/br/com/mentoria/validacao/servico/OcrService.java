@@ -25,9 +25,27 @@ public class OcrService {
     public OcrService(@Value("${app.ocr.command:tesseract}") String comando,
                       @Value("${app.ocr.tessdata-path:}") String tessdataPath,
                       @Value("${app.ocr.language:por}") String idioma) {
-        this.comando = comando;
-        this.tessdataPath = tessdataPath;
+        this.comando = encontrarComando(comando);
+        this.tessdataPath = tessdataPath == null || tessdataPath.isBlank() ? encontrarTessdata(idioma) : tessdataPath;
         this.idioma = idioma;
+    }
+
+    private static final Path TESSERACT_WINDOWS = Path.of("C:", "Program Files", "Tesseract-OCR");
+
+    /** No Windows o instalador nao poe o Tesseract no PATH: usa o caminho padrao se ele existir. */
+    static String encontrarComando(String comando) {
+        Path padrao = TESSERACT_WINDOWS.resolve("tesseract.exe");
+        return "tesseract".equals(comando) && Files.isRegularFile(padrao) ? padrao.toString() : comando;
+    }
+
+    /** Sem app.ocr.tessdata-path: procura uma pasta tessdata com o idioma (~/tessdata ou a do instalador do Windows). */
+    static String encontrarTessdata(String idioma) {
+        for (Path pasta : List.of(Path.of(System.getProperty("user.home"), "tessdata"), TESSERACT_WINDOWS.resolve("tessdata"))) {
+            if (Files.isRegularFile(pasta.resolve(idioma + ".traineddata"))) {
+                return pasta.toString();
+            }
+        }
+        return "";
     }
 
     public boolean configurado() {

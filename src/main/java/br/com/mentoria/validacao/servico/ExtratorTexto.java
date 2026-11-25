@@ -44,6 +44,7 @@ public class ExtratorTexto {
     private static final Pattern CIDADE_UF = Pattern.compile("(?u)^[\\p{L}][\\p{L} .'-]*?\\s*[/-]\\s*[A-Za-z]{2}$");
     private static final Pattern LINHA_DE_RUA = Pattern.compile(
             "(?imu)^\\s*((?:rua|r\\.|av\\.?|avenida|travessa|tv\\.|estrada|rodovia|alameda|pra[c\\u00e7]a)\\s+.+?)\\s*$");
+    private static final Pattern NOME_ENTRE_SETAS = Pattern.compile("(?u)[<\u00ab]{2,}\\s*([\\p{L}][\\p{L} .'-]{3,}?)\\s*>\\s*>");
     private static final Pattern DATA = Pattern.compile("\\b(\\d{2}/\\d{2}/\\d{4})\\b");
 
     public DadosComprovante extrair(String texto) {
@@ -62,7 +63,9 @@ public class ExtratorTexto {
         String t = texto == null ? "" : texto;
         String normalizado = Texto.normalizar(t);
         String tipo = normalizado.contains("HABILITACAO") || normalizado.matches("(?s).*\\bCNH\\b.*") ? "CNH" : "RG";
-        return new DadosIdentificacao(tipo, nome(t), cpf(t), data(valor(VALIDADE, t)));
+        // RG: o nome do titular vem entre << >> (a filiacao vem depois, no mesmo formato)
+        String nome = primeiro(nome(t), valor(NOME_ENTRE_SETAS, t));
+        return new DadosIdentificacao(tipo, nome, cpfValido(t), data(valor(VALIDADE, t)));
     }
 
     static Pattern rotulo(String regexRotulo) {
@@ -122,6 +125,20 @@ public class ExtratorTexto {
         } catch (DateTimeParseException e) {
             return null;
         }
+    }
+
+    /**
+     * Em documento lido por OCR, numeros de serie e de registro tambem tem 11 digitos:
+     * so aceita o primeiro candidato com digitos verificadores validos.
+     */
+    private static String cpfValido(String texto) {
+        Matcher m = CPF.matcher(texto);
+        while (m.find()) {
+            if (br.com.mentoria.validacao.dominio.Cpf.digitosValidos(m.group())) {
+                return m.group();
+            }
+        }
+        return null;
     }
 
     private static String cpf(String texto) {
