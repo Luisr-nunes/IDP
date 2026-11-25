@@ -18,15 +18,15 @@ class InterpretadorIaServiceTest {
     private static final String TEXTO = """
             COMPROVANTE DE RESIDENCIA
             Nome: Joao da Silva
-            CPF: 123.456.789-00
+            CPF: 529.982.247-25
             Endereco: Rua das Flores, 150
             Cidade: Guanambi - BA
             Data de emissao: 10/08/2026""";
 
     @Test
     void mascaraCpfComESemPontuacao() {
-        assertEquals("CPF: ***.***.***-** e ***.***.***-**", Cpf.mascarar("CPF: 123.456.789-00 e 12345678900"));
-        assertFalse(Cpf.mascarar(TEXTO).contains("123.456.789-00"));
+        assertEquals("CPF: ***.***.***-** e ***.***.***-**", Cpf.mascarar("CPF: 529.982.247-25 e 12345678900"));
+        assertFalse(Cpf.mascarar(TEXTO).contains("529.982.247-25"));
         assertTrue(Cpf.mascarar(TEXTO).contains("Nome: Joao da Silva"));
         assertNull(Cpf.mascarar(null));
     }
@@ -43,7 +43,7 @@ class InterpretadorIaServiceTest {
     void semChaveUsaExtracaoPorRegex() throws IOException {
         DadosComprovante dados = new InterpretadorIaService("", new ExtratorTexto()).interpretar(TEXTO);
 
-        assertEquals(new DadosComprovante("Joao da Silva", "123.456.789-00", "Rua das Flores, 150",
+        assertEquals(new DadosComprovante("Joao da Silva", "529.982.247-25", "Rua das Flores, 150",
                 "Guanambi - BA", LocalDate.of(2026, 8, 10)), dados);
     }
 

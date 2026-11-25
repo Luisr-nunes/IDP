@@ -60,7 +60,7 @@ class ConferenciaERevisaoManualTest {
 
     @Test
     void documentoCompletoForaDoPrazoReprovaSemRevisaoManual() {
-        var dados = new DadosComprovante("Joao da Silva", "123.456.789-00", "Rua A, 1", "Recife", HOJE.minusDays(91));
+        var dados = new DadosComprovante("Joao da Silva", "529.982.247-25", "Rua A, 1", "Recife", HOJE.minusDays(91));
         assertEquals(StatusValidacao.REPROVADO, validador.validar(dados, HOJE).status());
     }
 

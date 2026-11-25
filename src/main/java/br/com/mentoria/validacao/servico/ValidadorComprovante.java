@@ -1,5 +1,6 @@
 package br.com.mentoria.validacao.servico;
 
+import br.com.mentoria.validacao.dominio.Cpf;
 import br.com.mentoria.validacao.dominio.DadosComprovante;
 import br.com.mentoria.validacao.dominio.ResultadoValidacao;
 import br.com.mentoria.validacao.dominio.StatusValidacao;
@@ -21,35 +22,56 @@ public class ValidadorComprovante {
     }
 
     public ResultadoValidacao validar(DadosComprovante dados, LocalDate hoje) {
-        List<String> atendidas = new ArrayList<>();
-        List<String> pendencias = new ArrayList<>();
+        Regras r = new Regras();
 
-        checar(preenchido(dados.nome()), "Nome identificado", atendidas, pendencias);
-        checar(preenchido(dados.cpf()), "CPF encontrado", atendidas, pendencias);
-        checar(preenchido(dados.endereco()), "Endereco encontrado", atendidas, pendencias);
-        checar(preenchido(dados.cidade()), "Cidade encontrada", atendidas, pendencias);
+        r.checar(preenchido(dados.nome()), "Nome identificado", false);
+        r.checar(preenchido(dados.cpf()), "CPF encontrado", false);
+        if (preenchido(dados.cpf())) {
+            r.checar(Cpf.digitosValidos(dados.cpf()), "CPF valido", true);
+        }
+        r.checar(preenchido(dados.endereco()), "Endereco encontrado", false);
+        r.checar(preenchido(dados.cidade()), "Cidade encontrada", false);
 
         LocalDate emissao = dados.dataEmissao();
-        checar(emissao != null, "Data de emissao reconhecida", atendidas, pendencias);
+        r.checar(emissao != null, "Data de emissao reconhecida", false);
         boolean dentroDoPrazo = emissao != null
                 && !emissao.isAfter(hoje)
                 && !emissao.isBefore(hoje.minusDays(prazoEmissaoDias));
-        checar(dentroDoPrazo, "Emissao dentro de " + prazoEmissaoDias + " dias", atendidas, pendencias);
+        // data lida e fora do prazo reprova; data ausente so deixa a regra pendente
+        r.checar(dentroDoPrazo, "Emissao dentro de " + prazoEmissaoDias + " dias", emissao != null);
 
-        // extracao incerta: parte dos campos foi lida e parte nao (OCR ruim ou valor da IA descartado)
         long encontrados = Stream.of(dados.nome(), dados.cpf(), dados.endereco(), dados.cidade())
                 .filter(ValidadorComprovante::preenchido).count() + (emissao != null ? 1 : 0);
-        StatusValidacao status = pendencias.isEmpty() ? StatusValidacao.APROVADO
-                : encontrados > 0 && encontrados < 5 ? StatusValidacao.REVISAO_MANUAL
-                : StatusValidacao.REPROVADO;
-        return new ResultadoValidacao(status == StatusValidacao.APROVADO, status, atendidas, pendencias);
+        return r.resultado(encontrados > 0);
     }
 
-    private static boolean preenchido(String valor) {
+    static boolean preenchido(String valor) {
         return valor != null && !valor.isBlank();
     }
 
-    private static void checar(boolean ok, String regra, List<String> atendidas, List<String> pendencias) {
-        (ok ? atendidas : pendencias).add(ok ? regra : "Falhou: " + regra);
+    /**
+     * Acumula regras atendidas e pendencias. Falha de regra "dura" (CPF invalido, prazo vencido) reprova;
+     * campo ausente com outros campos lidos vai para revisao manual (OCR ruim ou valor da IA descartado).
+     */
+    static final class Regras {
+        final List<String> atendidas = new ArrayList<>();
+        final List<String> pendencias = new ArrayList<>();
+        boolean reprova;
+
+        void checar(boolean ok, String regra, boolean reprovaSeFalhar) {
+            if (ok) {
+                atendidas.add(regra);
+            } else {
+                pendencias.add("Falhou: " + regra);
+                reprova |= reprovaSeFalhar;
+            }
+        }
+
+        ResultadoValidacao resultado(boolean algoFoiLido) {
+            StatusValidacao status = pendencias.isEmpty() ? StatusValidacao.APROVADO
+                    : !reprova && algoFoiLido ? StatusValidacao.REVISAO_MANUAL
+                    : StatusValidacao.REPROVADO;
+            return new ResultadoValidacao(status == StatusValidacao.APROVADO, status, atendidas, pendencias);
+        }
     }
 }
