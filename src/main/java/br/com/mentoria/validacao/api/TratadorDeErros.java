@@ -1,5 +1,6 @@
 package br.com.mentoria.validacao.api;
 
+import br.com.mentoria.validacao.dominio.RevisaoNaoPermitidaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,11 @@ public class TratadorDeErros {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail jsonInvalido() {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "JSON invalido ou mal formatado");
+    }
+
+    @ExceptionHandler(RevisaoNaoPermitidaException.class)
+    public ProblemDetail revisaoNaoPermitida(RevisaoNaoPermitidaException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

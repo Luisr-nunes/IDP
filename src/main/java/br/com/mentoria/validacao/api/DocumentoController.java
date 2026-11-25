@@ -61,6 +61,12 @@ public class DocumentoController {
         return service.listarRecentes();
     }
 
+    /** O analista aprova ou reprova um documento em revisao manual (409 se ele nao estiver em revisao). */
+    @PostMapping("/{id}/revisao")
+    public ResponseEntity<ValidacaoRegistro> revisar(@PathVariable Long id, @Valid @RequestBody RevisaoRequest revisao) {
+        return ResponseEntity.of(service.revisar(id, revisao));
+    }
+
     /** Consulta o resultado salvo de uma validacao (sem texto do documento nem dados pessoais). */
     @GetMapping("/{id}")
     public ResponseEntity<ValidacaoRegistro> buscar(@PathVariable Long id) {
