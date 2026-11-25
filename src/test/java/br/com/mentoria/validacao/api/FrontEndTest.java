@@ -31,11 +31,17 @@ class FrontEndTest {
                 .andExpect(content().string(containsString("id=\"validar\"")));
         mvc.perform(get("/app.js")).andExpect(status().isOk());
         mvc.perform(get("/app.css")).andExpect(status().isOk());
+        mvc.perform(get("/banco.html")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"baixar-tudo\"")));
+        mvc.perform(get("/banco.js")).andExpect(status().isOk());
     }
 
     @Test
-    void telaNaoUsaInnerHtmlComDadosDaApi() throws IOException {
-        String js = new ClassPathResource("static/app.js").getContentAsString(StandardCharsets.UTF_8);
-        assertFalse(js.contains(".innerHTML") || js.contains(".outerHTML") || js.contains("insertAdjacentHTML"));
+    void telasNaoInterpretamHtmlComDadosDaApi() throws IOException {
+        for (String arquivo : new String[]{"static/app.js", "static/banco.js"}) {
+            String js = new ClassPathResource(arquivo).getContentAsString(StandardCharsets.UTF_8);
+            assertFalse(js.contains(".innerHTML") || js.contains(".outerHTML") || js.contains("insertAdjacentHTML")
+                    || js.contains("createContextualFragment") || js.contains("document.write"), arquivo);
+        }
     }
 }

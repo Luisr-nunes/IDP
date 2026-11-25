@@ -130,4 +130,30 @@ button.perigo:hover { background: var(--vermelho-fundo); }
 #motivo { min-height: 80px; font-family: inherit; font-size: 14px; }
 .revisado { display: block; font-size: 12px; color: var(--texto-3); margin-top: 2px; }
 .ok-revisao { margin: 14px 0 0; padding: 10px 12px; border-radius: 6px; background: var(--verde-fundo); color: var(--verde-texto); }
+.nav { display: flex; gap: 2px; padding: 8px 16px; border-bottom: 1px solid var(--borda); background: var(--fundo); position: sticky; top: 0; z-index: 1; }
+.nav-item { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 4px; color: var(--texto-2); text-decoration: none; font-size: 14px; }
+.nav-item svg { width: 16px; height: 16px; }
+.nav-item:hover { background: var(--fundo-hover); color: var(--texto); }
+.nav-item.ativo { color: var(--texto); background: var(--fundo-2); font-weight: 500; }
+.pagina.larga { max-width: 1200px; }
+.barra { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.filtros { display: flex; gap: 2px; }
+.filtro { border: 0; background: none; color: var(--texto-2); font: inherit; font-size: 14px; padding: 3px 10px; border-radius: 4px; cursor: pointer; }
+.filtro:hover { background: var(--fundo-hover); }
+.filtro.ativo { color: var(--texto); background: var(--fundo-2); box-shadow: inset 0 -2px 0 var(--texto); border-radius: 4px 4px 0 0; }
+.busca { flex: 1; min-width: 200px; font: inherit; font-size: 14px; padding: 5px 10px; color: var(--texto); background: var(--fundo-2); border: 1px solid var(--borda); border-radius: 6px; }
+.barra-acoes { display: flex; gap: 8px; margin-left: auto; }
+.botao-link { display: inline-block; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 500; padding: 3px 10px; }
+.botao-link.primario { background: var(--azul); color: #fff; border: 1px solid var(--azul); }
+.botao-link.primario:hover { filter: brightness(.94); }
+.tabela.banco td { white-space: nowrap; }
+.tabela.banco td.quebra { white-space: normal; min-width: 180px; }
+.tabela.banco tr.detalhe td { background: var(--fundo-2); white-space: normal; padding: 14px 16px; }
+.detalhe-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+.detalhe-grade h3 { font-size: 13px; color: var(--texto-2); font-weight: 500; margin: 0 0 6px; }
+.detalhe-acoes { margin-top: 12px; }
+.botao-expandir { border: 0; background: none; color: var(--texto-2); cursor: pointer; padding: 2px 4px; border-radius: 4px; display: inline-flex; }
+.botao-expandir:hover { background: var(--fundo-hover); color: var(--texto); }
+.botao-expandir svg { width: 16px; height: 16px; transition: transform .15s; }
+.botao-expandir[aria-expanded="true"] svg { transform: rotate(90deg); }
 [hidden] { display: none !important; }
