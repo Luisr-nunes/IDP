@@ -1,94 +1,78 @@
 # IDP — Intelligent Document Validation
 
 <!-- badges -->
-![Java](https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white) ![Maven](https://img.shields.io/badge/Maven-C71A36?style=flat-square&logo=apachemaven&logoColor=white) ![JUnit 5](https://img.shields.io/badge/JUnit%205-25A162?style=flat-square&logo=junit5&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Java](https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS](https://img.shields.io/badge/CSS-1572B6?style=flat-square&logo=css3&logoColor=white) ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white) ![Maven](https://img.shields.io/badge/Maven-C71A36?style=flat-square&logo=apachemaven&logoColor=white) ![JUnit 5](https://img.shields.io/badge/JUnit%205-25A162?style=flat-square&logo=junit5&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 
 [Ler em Português](README.md)
 
-Java and Spring Boot API to validate documents automatically: it takes a PDF or image, cleans up the image, extracts the text, structures the data with AI and applies business rules to approve, reject or send the document to manual review. Built for the Avanade Mentorship 2026.2.
+Java and Spring Boot system that validates documents automatically for customer onboarding: it takes the proof of address and, optionally, the holder's ID card (RG) or driver's license (CNH), cleans up the image, extracts the text, structures the data with AI and applies business rules to approve, reject or send the case to manual review. It ships with a web page for the analyst and a REST API. Built for the Avanade Mentorship 2026.2.
 
 ## Flow
 
 ```
-Document (PDF/image)
-   → OpenCV: image preprocessing                  (OpenCvService, external command)
+Upload (PDF/image)                                web page or POST /api/documentos/validar
+   → PDF with text: read directly                 (PdfService, PDFBox)
+   → OpenCV: image pre-processing                 (OpenCvService, external command)
    → Tesseract: text extraction                   (OcrService, external command)
    → AI: text into structured data                (InterpretadorIaService, OpenAI)
-   → Business rules                               (ValidadorComprovante)
-   → APROVADO | REPROVADO | REVISAO_MANUAL
+   → Business rules and cross-check               (ValidadorComprovante)
+   → Database: result saved                       (ValidacaoRegistro, H2/PostgreSQL)
+   → APROVADO | REPROVADO | REVISAO_MANUAL        query with GET /api/documentos/{id}
 ```
 
-Every stage has a local fallback, so the API works without an AI key and without Tesseract or OpenCV installed:
+Every step has a local fallback, so the system works without an AI key, Tesseract or OpenCV:
 
-| Stage | When configured | When not configured or on failure |
+| Step | Configured | Not configured or on failure |
 | --- | --- | --- |
+| PDF | text PDFs are read directly; scanned PDFs become an image (300 DPI) | invalid PDF uses `conteudoDocumento` |
 | OpenCV | `app.opencv.command` cleans up the image | keeps the original image |
-| Tesseract | `app.ocr.tessdata-path` extracts text from the image | uses the text in `conteudoDocumento` |
+| Tesseract | `app.ocr.tessdata-path` extracts the text | uses `conteudoDocumento` |
 | AI | `OPENAI_API_KEY` interprets the text | local regex extraction |
 
-The `etapas` field of the response shows which path each stage took.
+The response shows, in `etapas`, which path each of the 6 steps took.
+
+## Web page
+
+Open `http://localhost:8080`. The analyst uploads the proof of address and the RG/CNH as a file (PDF, PNG or JPG up to 5 MB) or pastes the text, and sees the status, the pipeline steps, the data read from each document, the rules met and failed, and the history of recent validations. Notion-style, with automatic dark mode.
 
 ## Endpoints
 
 | Method | Route | Description |
 | --- | --- | --- |
-| `GET` | `/api/documentos/exemplo` | Sample payload for validation |
-| `POST` | `/api/documentos/validar` | Runs the pipeline and returns stages, extracted data and result |
-| `GET` | `/api/documentos/{id}` | Returns the stored result of a validation |
+| `GET` | `/` | Web page |
+| `GET` | `/api/documentos/exemplo` | Sample payload (proof of address + CNH), always approved |
+| `POST` | `/api/documentos/validar` | Runs the pipeline and returns steps, extracted data and result |
+| `GET` | `/api/documentos/{id}` | Saved result of one validation |
+| `GET` | `/api/documentos` | The 20 most recent validations |
 
-`POST /api/documentos/validar` request (send `conteudoDocumento`, `imagemBase64` or both):
+`POST /api/documentos/validar` body (for each document send `conteudoDocumento`, `imagemBase64` or both; `identificacao` is optional):
 
 ```json
 {
   "nomeArquivo": "comprovante-residencia.pdf",
   "mimeType": "application/pdf",
-  "conteudoDocumento": "COMPROVANTE DE RESIDENCIA\nNome: Joao da Silva\nCPF: 123.456.789-00\nEndereco: Rua das Flores, 150\nCidade: Guanambi - BA\nData de emissao: 10/08/2026",
-  "imagemBase64": null
-}
-```
-
-Response (shortened):
-
-```json
-{
-  "nomeArquivo": "comprovante-residencia.pdf",
-  "etapas": [
-    { "ordem": 1, "nome": "Documento", "descricao": "Entrada do arquivo para o pipeline", "resultado": "comprovante-residencia.pdf" }
-  ],
-  "dadosExtraidos": {
-    "nome": "Joao da Silva",
-    "cpf": "123.456.789-00",
-    "endereco": "Rua das Flores, 150",
-    "cidade": "Guanambi - BA",
-    "dataEmissao": "2026-08-10"
-  },
-  "resultado": {
-    "aprovado": true,
-    "status": "APROVADO",
-    "regrasAtendidas": ["Nome identificado", "CPF encontrado", "Endereco encontrado", "Cidade encontrada", "Data de emissao reconhecida", "Emissao dentro de 90 dias"],
-    "pendencias": []
+  "conteudoDocumento": "COMPROVANTE DE RESIDENCIA\nNome: Joao da Silva\nCPF: 529.982.247-25\nEndereco: Rua das Flores, 150\nCidade: Guanambi - BA\nData de emissao: 15/11/2026",
+  "identificacao": {
+    "nomeArquivo": "cnh.pdf",
+    "mimeType": "application/pdf",
+    "conteudoDocumento": "CARTEIRA NACIONAL DE HABILITACAO\nNome: Joao da Silva\nCPF: 529.982.247-25\nValidade: 25/11/2028"
   }
 }
 ```
 
-The `Location` response header points to `GET /api/documentos/{id}`. `mimeType` accepts `application/pdf`, `image/png` and `image/jpeg`; `imagemBase64` is limited to 5 MB.
+The `Location` header points to `GET /api/documentos/{id}`. `mimeType` accepts `application/pdf`, `image/png` and `image/jpeg`; `imagemBase64` must be valid Base64, up to 5 MB.
 
 ## Rules
 
-A proof of address is approved only if all of these hold (rule texts are returned in Portuguese):
+Proof of address: readable (at least 20 characters read); name, CPF, address, city and issue date found; valid CPF (check digits); issued within 90 days and not in the future (`app.validacao.prazo-emissao-dias`).
 
-- Nome identificado (name identified)
-- CPF encontrado (CPF, the Brazilian taxpayer ID, found)
-- Endereco encontrado (address found)
-- Cidade encontrada (city found)
-- Data de emissao reconhecida (issue date recognized)
-- Emissao dentro de 90 dias (issued within 90 days and not in the future; set in `app.validacao.prazo-emissao-dias`)
+With RG or CNH (cross-check): readable; name and CPF found; same name on both documents (accent and case insensitive); same CPF on both; CNH not expired.
 
 Status:
 
 - `APROVADO`: every rule met.
-- `REPROVADO`: the document was fully read but a rule failed (for example, an old issue date), or nothing was extracted.
-- `REVISAO_MANUAL`: uncertain extraction, only some fields were found (poor OCR or an AI value that was discarded).
+- `REPROVADO`: unreadable document, invalid CPF, issue date out of range, name or CPF mismatch, expired CNH, or nothing extracted. The reason is always in `pendencias`.
+- `REVISAO_MANUAL`: uncertain extraction, only some fields were found (poor OCR or AI value discarded).
 
 ## Running
 
@@ -103,24 +87,10 @@ cd IDP
 
 ### Optional integrations
 
-OpenAI (the key only comes from an environment variable):
-
 ```powershell
 $env:OPENAI_API_KEY="your-key"
-```
-
-Tesseract, in `application.properties` or through environment variables:
-
-```properties
-app.ocr.command=tesseract
-app.ocr.tessdata-path=C:/Program Files/Tesseract-OCR/tessdata
-app.ocr.language=por
-```
-
-OpenCV, with the bundled script (takes `inputFile outputFile`; requires `pip install opencv-python`):
-
-```properties
-app.opencv.command=python scripts/preprocessar_documento.py
+$env:APP_OCR_TESSDATAPATH="C:/Program Files/Tesseract-OCR/tessdata"     # Tesseract with the 'por' language
+$env:APP_OPENCV_COMMAND="python scripts/preprocessar_documento.py"       # pip install opencv-python-headless
 ```
 
 ### prod profile with PostgreSQL
@@ -132,52 +102,40 @@ $env:SPRING_PROFILES_ACTIVE="prod"
 ./mvnw spring-boot:run
 ```
 
-prod profile variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` (required).
+prod variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` (required).
 
 ## Demo flow
 
-1. Start the API with `./mvnw spring-boot:run`.
-2. Call `GET /api/documentos/exemplo` and send the payload to `POST /api/documentos/validar`.
-3. With no AI key and no `tessdata`, show the local fallback in `etapas`.
-4. Change the issue date to an old one to get `REPROVADO`, or remove lines from the text to get `REVISAO_MANUAL`.
-5. Fetch the stored result through the `Location` header (`GET /api/documentos/{id}`).
-6. Set `OPENAI_API_KEY` and `app.ocr.tessdata-path` to show the setup closest to the real world; for OpenCV, point `app.opencv.command` to the script.
+1. Run `./mvnw spring-boot:run` and open `http://localhost:8080`.
+2. Click **Usar exemplo**, then **Validar documentos**: approved, with the 6 steps and the rules.
+3. Change the name or CPF on the CNH: rejected for mismatch between documents.
+4. Use an old CNH expiry or issue date: rejected, with the reason.
+5. Delete lines from the proof of address: manual review.
+6. Upload a real PDF in the **Arquivo** tab: text is read straight from the PDF, no OCR.
+7. Show the history and the API query (`GET /api/documentos/{id}`).
+8. With `OPENAI_API_KEY` and Tesseract configured, repeat with a photo to show real OCR and AI.
 
 ## Technical decisions
 
-- **External processes instead of Java libraries**: Tesseract and OpenCV run as configurable commands, with arguments passed as a list (no concatenated user input), a 30-second timeout and temporary files always deleted.
-- **Fallback at every stage**: an error or timeout in OpenCV, OCR or AI does not fail the request; the stage takes the local path and reports the failure.
-- **Privacy with the AI**: the CPF is masked before the text is sent to OpenAI and is read locally with a regex.
-- **Anti-hallucination**: name, address, city and date returned by the AI are only accepted if they appear in the document text (accent- and case-insensitive comparison).
-- **Manual review**: partial extraction goes to `REVISAO_MANUAL` instead of being rejected outright.
-- **Data minimization**: the database stores only the file name, status, pending rules and timestamp; never the text, the image, the name, the CPF or the address.
-- **Logs**: errors only record the exception type, and a Logback converter masks any CPF that reaches a log message.
-- **Secrets**: the AI key and the database password come only from environment variables; nothing is stored in the repository.
+- **External processes instead of Java bindings**: Tesseract and OpenCV run as configurable commands with list arguments (no string concatenation of user input), a 30-second timeout and temp files always deleted.
+- **PDF before OCR**: text PDFs are read with PDFBox, faster and exact; only scanned PDFs are rendered to an image.
+- **Fallback everywhere**: errors or timeouts in PDF, OpenCV, OCR or AI never break the request; the step uses the local path and reports it.
+- **Local cross-check**: RG and CNH have fixed labels, so name, CPF and expiry are read by regex and the ID document is never sent to the AI.
+- **Privacy with the AI**: CPFs are masked before the text goes to OpenAI and read locally.
+- **Anti-hallucination**: AI values are only accepted if they appear in the document text.
+- **Data minimisation**: the database stores only file name, status, pending items and date; never the text, image, name, CPF or address.
+- **Front-end safety**: API data reaches the page only through `textContent`, never `innerHTML`; input is validated on the server (type, size and Base64).
+- **Logs**: errors log only the exception type, and a Logback converter masks any CPF in a message.
+- **Secrets**: AI key and database password only from environment variables.
 
 ## Tech stack
 
-- Java 21, Spring Boot 3.5 (Web, Validation, Data JPA)
+- Java 21, Spring Boot 3.5 (Web, Validation, Data JPA), PDFBox
+- Plain HTML, CSS and JavaScript for the web page
 - PostgreSQL (prod) and H2 (dev and tests)
-- Tesseract OCR, OpenCV (Python) and the OpenAI API, as optional integrations
+- Tesseract OCR, OpenCV (Python) and the OpenAI API as optional integrations
 - JUnit 5 and MockMvc; CI with GitHub Actions
-- Maven (Maven Wrapper included)
-
-## Structure
-
-```
-IDP/
-├── src/main/java/br/com/mentoria/validacao/
-│   ├── api/           # DocumentoController, ValidacaoRequest, ValidacaoResponse, TratadorDeErros
-│   ├── dominio/       # DadosComprovante, EtapaPipeline, ResultadoValidacao, StatusValidacao, Cpf, Texto
-│   ├── servico/       # ValidacaoDocumentoService, OpenCvService, OcrService, InterpretadorIaService,
-│   │                  # ExtratorTexto, ValidadorComprovante
-│   ├── persistencia/  # ValidacaoRegistro, ValidacaoRegistroRepository
-│   └── log/           # MascaraDadosPessoaisConverter
-├── src/main/resources/  # application.properties, application-dev/prod.properties, logback-spring.xml
-├── scripts/preprocessar_documento.py
-├── docker-compose.yml
-└── pom.xml
-```
+- Maven (wrapper included)
 
 ## Author
 
