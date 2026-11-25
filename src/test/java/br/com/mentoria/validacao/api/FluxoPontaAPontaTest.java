@@ -79,6 +79,19 @@ class FluxoPontaAPontaTest {
         assertEquals("REVISAO_MANUAL", corpo.path("etapas").path(4).path("resultado").asText());
     }
 
+    @Test
+    void historicoListaAValidacaoSemDadosPessoais() throws Exception {
+        validar(requisicao("Nome: Carla Dias\\nCPF: 529.982.247-25\\nCidade: Olinda"));
+
+        String historico = mvc.perform(get("/api/documentos")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode primeiro = json.readTree(historico).path(0);
+
+        assertEquals("doc.pdf", primeiro.path("nomeArquivo").asText());
+        assertTrue(primeiro.has("status") && primeiro.has("criadoEm"));
+        assertTrue(!historico.contains("Carla") && !historico.contains("529.982.247-25"));
+    }
+
     private static String requisicao(String conteudo) {
         return "{\"nomeArquivo\":\"doc.pdf\",\"mimeType\":\"application/pdf\",\"conteudoDocumento\":\"" + conteudo + "\"}";
     }
