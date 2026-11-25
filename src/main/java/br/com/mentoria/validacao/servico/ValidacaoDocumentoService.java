@@ -156,14 +156,17 @@ public class ValidacaoDocumentoService {
         return registros.findTop20ByOrderByCriadoEmDescIdDesc();
     }
 
-    /** PDF com texto dispensa OCR; PDF escaneado e imagem passam por OpenCV e Tesseract; sem OCR, usa o texto enviado. */
+    /**
+     * PDF com texto dispensa OCR; PDF escaneado vira uma imagem por pagina (RG costuma ter frente e verso)
+     * e cada pagina passa por OpenCV e Tesseract; sem OCR, usa o texto enviado.
+     */
     Leitura ler(String mimeType, String conteudoDocumento, byte[] arquivo) {
         String conteudo = conteudoDocumento == null ? "" : conteudoDocumento;
         String semOcr = "OCR nao configurado: usando conteudoDocumento (" + conteudo.length() + " caracteres)";
         if (arquivo == null) {
             return new Leitura(conteudo, "Nao executado", semOcr);
         }
-        byte[] imagem = arquivo;
+        List<byte[]> imagens = List.of(arquivo);
         if ("application/pdf".equals(mimeType)) {
             try {
                 String textoPdf = pdf.extrairTexto(arquivo);
@@ -171,7 +174,7 @@ public class ValidacaoDocumentoService {
                     return new Leitura(textoPdf, "Nao necessario: PDF com texto",
                             "Texto lido direto do PDF (" + textoPdf.length() + " caracteres), sem OCR");
                 }
-                imagem = pdf.primeiraPaginaComoImagem(arquivo);
+                imagens = pdf.paginasComoImagem(arquivo);
             } catch (IOException | RuntimeException e) {
                 falha("PDF", e);
                 return new Leitura(conteudo, "Nao executado",
@@ -182,18 +185,24 @@ public class ValidacaoDocumentoService {
             return new Leitura(conteudo, "Nao executado", semOcr);
         }
         String resultadoOpenCv = "Nao executado";
-        if (openCv.configurado()) {
-            try {
-                imagem = openCv.preprocessar(imagem);
-                resultadoOpenCv = "Imagem tratada pelo OpenCV";
-            } catch (IOException | RuntimeException e) {
-                falha("OpenCV", e);
-                resultadoOpenCv = "Falha no OpenCV: usando a imagem original";
-            }
-        }
+        StringBuilder texto = new StringBuilder();
         try {
-            String texto = ocr.extrairTexto(imagem);
-            return new Leitura(texto, resultadoOpenCv, texto.length() + " caracteres extraidos da imagem");
+            for (byte[] pagina : imagens) {
+                byte[] imagem = pagina;
+                if (openCv.configurado()) {
+                    try {
+                        imagem = openCv.preprocessar(pagina);
+                        resultadoOpenCv = "Imagem tratada pelo OpenCV";
+                    } catch (IOException | RuntimeException e) {
+                        falha("OpenCV", e);
+                        resultadoOpenCv = "Falha no OpenCV: usando a imagem original";
+                    }
+                }
+                texto.append(ocr.extrairTexto(imagem)).append('\n');
+            }
+            String lido = texto.toString();
+            String paginas = imagens.size() > 1 ? " (" + imagens.size() + " paginas)" : "";
+            return new Leitura(lido, resultadoOpenCv, lido.strip().length() + " caracteres extraidos da imagem" + paginas);
         } catch (IOException | RuntimeException e) {
             falha("Tesseract", e);
             return new Leitura(conteudo, resultadoOpenCv,

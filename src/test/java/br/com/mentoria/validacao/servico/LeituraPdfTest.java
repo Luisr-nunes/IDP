@@ -45,6 +45,17 @@ class LeituraPdfTest {
         }
     }
 
+    static byte[] pdfComPaginas(int quantidade) throws IOException {
+        try (PDDocument doc = new PDDocument()) {
+            for (int i = 0; i < quantidade; i++) {
+                doc.addPage(new PDPage());
+            }
+            var saida = new ByteArrayOutputStream();
+            doc.save(saida);
+            return saida.toByteArray();
+        }
+    }
+
     @Test
     void pdfComTextoELidoSemOcr() throws IOException {
         String base64 = Base64.getEncoder().encodeToString(pdf("Nome: Maria Souza", "Cidade: Recife"));
