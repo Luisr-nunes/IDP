@@ -7,4 +7,6 @@ import java.util.List;
 public interface ValidacaoRegistroRepository extends JpaRepository<ValidacaoRegistro, Long> {
 
     List<ValidacaoRegistro> findTop20ByOrderByCriadoEmDescIdDesc();
+
+    List<ValidacaoRegistro> findAllByOrderByCriadoEmDescIdDesc();
 }

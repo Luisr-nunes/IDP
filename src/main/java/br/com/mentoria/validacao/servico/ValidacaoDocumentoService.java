@@ -3,6 +3,10 @@ package br.com.mentoria.validacao.servico;
 import br.com.mentoria.validacao.api.ValidacaoRequest;
 import br.com.mentoria.validacao.api.ValidacaoResponse;
 import br.com.mentoria.validacao.api.DocumentoIdentificacao;
+import br.com.mentoria.validacao.api.RegistroBanco;
+import br.com.mentoria.validacao.dominio.DadosGuardados;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import br.com.mentoria.validacao.api.RevisaoRequest;
 import br.com.mentoria.validacao.dominio.Cpf;
 import br.com.mentoria.validacao.dominio.StatusValidacao;
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -31,6 +36,8 @@ import java.util.Optional;
 public class ValidacaoDocumentoService {
 
     private static final Logger log = LoggerFactory.getLogger(ValidacaoDocumentoService.class);
+    private static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules()
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private final InterpretadorIaService interpretador;
     private final ValidadorComprovante validador;
@@ -83,6 +90,7 @@ public class ValidacaoDocumentoService {
         ResultadoValidacao resultado = validador.validar(dados, leitura.texto().strip().length(), identificacao,
                 leituraId == null ? null : leituraId.texto().strip().length(), LocalDate.now());
         var registro = new ValidacaoRegistro(request.nomeArquivo(), resultado, Instant.now());
+        registro.guardarDados(JSON.writeValueAsString(new DadosGuardados(dados, identificacao)));
         registros.save(registro); // registro novo: o persist preenche o id na propria instancia
 
         String documentos = identificacao == null ? request.nomeArquivo()
@@ -118,6 +126,29 @@ public class ValidacaoDocumentoService {
             registro.revisar(StatusValidacao.valueOf(revisao.decisao()), Cpf.mascarar(revisao.motivo().strip()), Instant.now());
             return registros.save(registro);
         });
+    }
+
+    /** Todos os registros com os dados extraidos abertos, do mais recente ao mais antigo (tela Banco de Dados). */
+    public List<RegistroBanco> listarBanco() {
+        return registros.findAllByOrderByCriadoEmDescIdDesc().stream().map(ValidacaoDocumentoService::paraBanco).toList();
+    }
+
+    private static RegistroBanco paraBanco(ValidacaoRegistro r) {
+        DadosGuardados d = lerDados(r.dadosExtraidos());
+        return new RegistroBanco(r.getId(), r.getNomeArquivo(), r.getStatus(), r.isAprovado(), r.getPendencias(),
+                r.getCriadoEm(), r.isRevisadoManualmente(), r.getMotivoRevisao(), r.getRevisadoEm(),
+                d.comprovante(), d.identificacao());
+    }
+
+    private static DadosGuardados lerDados(String json) {
+        if (json == null) {
+            return new DadosGuardados(null, null); // registros gravados antes de os dados serem guardados
+        }
+        try {
+            return JSON.readValue(json, DadosGuardados.class);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /** As 20 validacoes mais recentes, para o historico da tela. */
