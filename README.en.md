@@ -7,6 +7,19 @@
 
 Java and Spring Boot system that validates documents automatically for customer onboarding: it takes the proof of address and, optionally, the holder's ID card (RG) or driver's license (CNH), cleans up the image, extracts the text, structures the data with AI and applies business rules to approve, reject or send the case to manual review. It ships with a web page for the analyst and a REST API. Built for the Avanade Mentorship 2026.2.
 
+## Quick access
+
+With the system running (`./mvnw spring-boot:run`):
+
+| Page | Link |
+| --- | --- |
+| Validation (main page) | [http://localhost:8080](http://localhost:8080) |
+| Database | [http://localhost:8080/banco.html](http://localhost:8080/banco.html) |
+| Export the database as JSON | [http://localhost:8080/api/banco/exportar](http://localhost:8080/api/banco/exportar) |
+| API sample payload | [http://localhost:8080/api/documentos/exemplo](http://localhost:8080/api/documentos/exemplo) |
+
+If port 8080 is taken, start on another one and change the number in the links: `./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8765` (then [http://localhost:8765](http://localhost:8765) and [http://localhost:8765/banco.html](http://localhost:8765/banco.html)).
+
 ## Flow
 
 ```
