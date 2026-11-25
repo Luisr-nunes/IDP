@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.List;
 import java.time.format.DateTimeFormatter;
 
 @RestController
@@ -52,6 +53,12 @@ public class DocumentoController {
         ValidacaoResponse resposta = service.validar(request);
         return resposta.id() == null ? ResponseEntity.ok(resposta)
                 : ResponseEntity.ok().location(URI.create("/api/documentos/" + resposta.id())).body(resposta);
+    }
+
+    /** Historico das ultimas 20 validacoes (sem texto do documento nem dados pessoais). */
+    @GetMapping
+    public List<ValidacaoRegistro> listar() {
+        return service.listarRecentes();
     }
 
     /** Consulta o resultado salvo de uma validacao (sem texto do documento nem dados pessoais). */

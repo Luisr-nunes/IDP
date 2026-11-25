@@ -104,6 +104,11 @@ public class ValidacaoDocumentoService {
         return registros.findById(id);
     }
 
+    /** As 20 validacoes mais recentes, para o historico da tela. */
+    public List<ValidacaoRegistro> listarRecentes() {
+        return registros.findTop20ByOrderByCriadoEmDescIdDesc();
+    }
+
     /** PDF com texto dispensa OCR; PDF escaneado e imagem passam por OpenCV e Tesseract; sem OCR, usa o texto enviado. */
     Leitura ler(String mimeType, String conteudoDocumento, byte[] arquivo) {
         String conteudo = conteudoDocumento == null ? "" : conteudoDocumento;
