@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Validação de documentos</title>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="pagina">
+    <header class="cabecalho">
+        <svg class="icone-titulo" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
+        <h1>Validação de documentos</h1>
+        <p class="sub">Envie o comprovante de residência e, se quiser, o RG ou a CNH do titular. O sistema lê o texto, extrai os dados, aplica as regras e guarda o resultado.</p>
+    </header>
+
+    <section class="bloco" aria-labelledby="t-envio">
+        <h2 id="t-envio">Documentos</h2>
+        <div class="docs">
+            <div class="doc" data-doc="comprovante">
+                <div class="doc-topo">
+                    <h3>Comprovante de residência</h3>
+                    <span class="obrigatorio">obrigatório</span>
+                </div>
+                <div class="abas" role="tablist">
+                    <button type="button" role="tab" class="aba ativa" data-aba="arquivo" aria-selected="true">Arquivo</button>
+                    <button type="button" role="tab" class="aba" data-aba="texto" aria-selected="false">Texto</button>
+                </div>
+                <label class="soltar" data-painel="arquivo">
+                    <input type="file" accept="application/pdf,image/png,image/jpeg" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/></svg>
+                    <span class="soltar-texto">Arraste ou clique para escolher</span>
+                    <span class="soltar-dica">PDF, PNG ou JPG até 5 MB</span>
+                </label>
+                <textarea data-painel="texto" hidden rows="7" placeholder="Cole aqui o texto do comprovante"></textarea>
+            </div>
+
+            <div class="doc" data-doc="identificacao">
+                <div class="doc-topo">
+                    <h3>RG ou CNH</h3>
+                    <span class="opcional">opcional</span>
+                </div>
+                <div class="abas" role="tablist">
+                    <button type="button" role="tab" class="aba ativa" data-aba="arquivo" aria-selected="true">Arquivo</button>
+                    <button type="button" role="tab" class="aba" data-aba="texto" aria-selected="false">Texto</button>
+                </div>
+                <label class="soltar" data-painel="arquivo">
+                    <input type="file" accept="application/pdf,image/png,image/jpeg" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.8-1.5 1.8-2 3-2s2.2.5 3 2"/><path d="M14 10h4M14 13h3"/></svg>
+                    <span class="soltar-texto">Arraste ou clique para escolher</span>
+                    <span class="soltar-dica">Usado para conferir nome, CPF e validade</span>
+                </label>
+                <textarea data-painel="texto" hidden rows="7" placeholder="Cole aqui o texto do RG ou da CNH"></textarea>
+            </div>
+        </div>
+        <div class="acoes">
+            <button type="button" id="validar" class="primario">Validar documentos</button>
+            <button type="button" id="exemplo" class="secundario">Usar exemplo</button>
+            <button type="button" id="limpar" class="secundario">Limpar</button>
+        </div>
+        <p id="aviso" class="aviso" role="alert" hidden></p>
+    </section>
+
+    <section id="resultado" class="bloco" aria-labelledby="t-resultado" hidden>
+        <div class="resultado-topo">
+            <h2 id="t-resultado">Resultado</h2>
+            <span id="status" class="tag"></span>
+        </div>
+
+        <h3 class="rotulo">Etapas</h3>
+        <ol id="etapas" class="etapas"></ol>
+
+        <div class="colunas">
+            <div>
+                <h3 class="rotulo">Dados do comprovante</h3>
+                <dl id="dados" class="propriedades"></dl>
+            </div>
+            <div id="bloco-identificacao" hidden>
+                <h3 class="rotulo" id="t-identificacao">Dados da identificação</h3>
+                <dl id="identificacao" class="propriedades"></dl>
+            </div>
+        </div>
+
+        <h3 class="rotulo">Regras</h3>
+        <ul id="regras" class="regras"></ul>
+    </section>
+
+    <section class="bloco" aria-labelledby="t-historico">
+        <div class="resultado-topo">
+            <h2 id="t-historico">Histórico</h2>
+            <button type="button" id="atualizar" class="secundario pequeno">Atualizar</button>
+        </div>
+        <p class="sub">Últimas 20 validações. Só o resultado é guardado: o texto e os dados pessoais dos documentos não ficam salvos.</p>
+        <div class="tabela-rolagem">
+            <table class="tabela">
+                <thead><tr><th>#</th><th>Arquivo</th><th>Status</th><th>Pendências</th><th>Quando</th></tr></thead>
+                <tbody id="historico"></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<template id="icone-ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></template>
+<template id="icone-falha"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></template>
+<script src="app.js"></script>
+</body>
+</html>
