@@ -7,6 +7,19 @@
 
 Sistema em Java e Spring Boot que valida documentos automaticamente para análise de cadastro: recebe o comprovante de residência e, opcionalmente, o RG ou a CNH do titular, trata a imagem, extrai o texto, estrutura os dados com IA e aplica as regras de negócio para aprovar, reprovar ou encaminhar para revisão manual. Tem tela web para o analista e API REST. Projeto da Mentoria Avanade 2026.2.
 
+## Acesso rápido
+
+Com o sistema rodando (`./mvnw spring-boot:run`):
+
+| Tela | Link |
+| --- | --- |
+| Validação (tela principal) | [http://localhost:8080](http://localhost:8080) |
+| Banco de Dados | [http://localhost:8080/banco.html](http://localhost:8080/banco.html) |
+| Exportar o banco em JSON | [http://localhost:8080/api/banco/exportar](http://localhost:8080/api/banco/exportar) |
+| Payload de exemplo da API | [http://localhost:8080/api/documentos/exemplo](http://localhost:8080/api/documentos/exemplo) |
+
+Se a porta 8080 estiver ocupada, suba em outra e troque o número nos links: `./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8765` (então [http://localhost:8765](http://localhost:8765) e [http://localhost:8765/banco.html](http://localhost:8765/banco.html)).
+
 ## Fluxo
 
 ```
