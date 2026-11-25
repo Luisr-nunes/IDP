@@ -14,10 +14,10 @@ class ExtratorTextoTest {
 
     @Test
     void extraiTodosOsCamposDoExemploDoReadme() {
-        String texto = "COMPROVANTE DE RESIDENCIA\nNome: Joao da Silva\nCPF: 123.456.789-00\n"
+        String texto = "COMPROVANTE DE RESIDENCIA\nNome: Joao da Silva\nCPF: 529.982.247-25\n"
                 + "Endereco: Rua das Flores, 150\nCidade: Guanambi - BA\nData de emissao: 10/08/2026";
 
-        assertEquals(new DadosComprovante("Joao da Silva", "123.456.789-00", "Rua das Flores, 150",
+        assertEquals(new DadosComprovante("Joao da Silva", "529.982.247-25", "Rua das Flores, 150",
                 "Guanambi - BA", LocalDate.of(2026, 8, 10)), extrator.extrair(texto));
     }
 

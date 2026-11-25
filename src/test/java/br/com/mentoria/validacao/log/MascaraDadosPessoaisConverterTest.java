@@ -20,7 +20,7 @@ class MascaraDadosPessoaisConverterTest {
     void mascaraCpfNaMensagemFormatada() {
         LoggingEvent evento = new LoggingEvent();
         evento.setMessage("documento do CPF {}");
-        evento.setArgumentArray(new Object[]{"123.456.789-00"});
+        evento.setArgumentArray(new Object[]{"529.982.247-25"});
 
         assertEquals("documento do CPF ***.***.***-**", new MascaraDadosPessoaisConverter().convert(evento));
     }

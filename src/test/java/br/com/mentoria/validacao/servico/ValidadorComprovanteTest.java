@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ValidadorComprovanteTest {
 
     private static final LocalDate HOJE = LocalDate.of(2026, 10, 21);
-    private static final String CPF = "123.456.789-00";
+    private static final String CPF = "529.982.247-25";
     private final ValidadorComprovante validador = new ValidadorComprovante(90);
 
     @Test
@@ -22,7 +22,7 @@ class ValidadorComprovanteTest {
         var resultado = validador.validar(dados, HOJE);
         assertEquals(StatusValidacao.APROVADO, resultado.status());
         assertTrue(resultado.aprovado());
-        assertEquals(java.util.List.of("Nome identificado", "CPF encontrado", "Endereco encontrado",
+        assertEquals(java.util.List.of("Nome identificado", "CPF encontrado", "CPF valido", "Endereco encontrado",
                 "Cidade encontrada", "Data de emissao reconhecida", "Emissao dentro de 90 dias"), resultado.regrasAtendidas());
     }
 
@@ -52,6 +52,14 @@ class ValidadorComprovanteTest {
     void reprovaSemCpf() {
         var dados = new DadosComprovante("Joao da Silva", null, "Rua das Flores, 150", "Recife", HOJE);
         assertEquals(java.util.List.of("Falhou: CPF encontrado"), validador.validar(dados, HOJE).pendencias());
+    }
+
+    @Test
+    void reprovaCpfComDigitoVerificadorErrado() {
+        var dados = new DadosComprovante("Joao da Silva", "123.456.789-00", "Rua das Flores, 150", "Recife", HOJE);
+        var resultado = validador.validar(dados, HOJE);
+        assertEquals(StatusValidacao.REPROVADO, resultado.status());
+        assertEquals(java.util.List.of("Falhou: CPF valido"), resultado.pendencias());
     }
 
     @Test

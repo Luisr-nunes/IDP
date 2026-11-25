@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/api/documentos")
@@ -24,12 +26,14 @@ public class DocumentoController {
         this.service = service;
     }
 
+    /** Payload de demonstracao com CPF valido e emissao de 10 dias atras, para o exemplo sempre ser aprovado. */
     @GetMapping("/exemplo")
     public ValidacaoRequest exemplo() {
+        String emissao = LocalDate.now().minusDays(10).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         return new ValidacaoRequest(
                 "comprovante-residencia.pdf",
                 "application/pdf",
-                "COMPROVANTE DE RESIDENCIA\nNome: Joao da Silva\nCPF: 123.456.789-00\nEndereco: Rua das Flores, 150\nCidade: Guanambi - BA\nData de emissao: 10/08/2026",
+                "COMPROVANTE DE RESIDENCIA\nNome: Joao da Silva\nCPF: 529.982.247-25\nEndereco: Rua das Flores, 150\nCidade: Guanambi - BA\nData de emissao: " + emissao,
                 null);
     }
 

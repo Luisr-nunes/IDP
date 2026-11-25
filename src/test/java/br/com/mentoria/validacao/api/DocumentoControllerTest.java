@@ -42,7 +42,7 @@ class DocumentoControllerTest {
 
     @Test
     void validarRetornaEtapasDadosEResultado() throws Exception {
-        DadosComprovante dados = new DadosComprovante("Joao da Silva", "123.456.789-00",
+        DadosComprovante dados = new DadosComprovante("Joao da Silva", "529.982.247-25",
                 "Rua das Flores, 150", "Guanambi - BA", LocalDate.of(2026, 8, 10));
         ResultadoValidacao resultado = new ResultadoValidacao(true, StatusValidacao.APROVADO,
                 List.of("Nome identificado"), List.of());

@@ -1,6 +1,7 @@
 package br.com.mentoria.validacao.api;
 
 import org.junit.jupiter.api.Test;
+import java.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,17 +29,17 @@ class ValidacaoExemploTest {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
-        // a regra "Emissao dentro de 90 dias" depende da data de hoje, por isso nao e verificada aqui
         mvc.perform(post("/api/documentos/validar").contentType(MediaType.APPLICATION_JSON).content(exemplo))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nomeArquivo").value("comprovante-residencia.pdf"))
                 .andExpect(jsonPath("$.etapas", hasSize(5)))
                 .andExpect(jsonPath("$.dadosExtraidos.nome").value("Joao da Silva"))
-                .andExpect(jsonPath("$.dadosExtraidos.cpf").value("123.456.789-00"))
+                .andExpect(jsonPath("$.dadosExtraidos.cpf").value("529.982.247-25"))
                 .andExpect(jsonPath("$.dadosExtraidos.endereco").value("Rua das Flores, 150"))
                 .andExpect(jsonPath("$.dadosExtraidos.cidade").value("Guanambi - BA"))
-                .andExpect(jsonPath("$.dadosExtraidos.dataEmissao").value("2026-08-10"))
-                .andExpect(jsonPath("$.resultado.regrasAtendidas", hasItems("Nome identificado", "CPF encontrado",
+                .andExpect(jsonPath("$.dadosExtraidos.dataEmissao").value(LocalDate.now().minusDays(10).toString()))
+                .andExpect(jsonPath("$.resultado.status").value("APROVADO"))
+                .andExpect(jsonPath("$.resultado.regrasAtendidas", hasItems("Nome identificado", "CPF encontrado", "CPF valido",
                         "Endereco encontrado", "Cidade encontrada", "Data de emissao reconhecida")));
     }
 }
