@@ -7,6 +7,11 @@ public record DadosComprovante(
         String cpf,
         String endereco,
         String cidade,
-        LocalDate dataEmissao
+        LocalDate dataEmissao,
+        String cep
 ) {
+
+    public DadosComprovante(String nome, String cpf, String endereco, String cidade, LocalDate dataEmissao) {
+        this(nome, cpf, endereco, cidade, dataEmissao, null);
+    }
 }

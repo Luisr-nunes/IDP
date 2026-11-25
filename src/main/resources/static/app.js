@@ -4,7 +4,7 @@
 const LIMITE_BYTES = 5 * 1024 * 1024;
 const TIPOS = ['application/pdf', 'image/png', 'image/jpeg'];
 const ROTULOS = {
-    nome: 'Nome', cpf: 'CPF', endereco: 'Endereço', cidade: 'Cidade', dataEmissao: 'Emissão',
+    nome: 'Nome', cpf: 'CPF', endereco: 'Endereço', cidade: 'Cidade', cep: 'CEP', dataEmissao: 'Emissão',
     tipo: 'Tipo', validade: 'Validade'
 };
 const STATUS = { APROVADO: 'Aprovado', REPROVADO: 'Reprovado', REVISAO_MANUAL: 'Revisão manual' };
@@ -157,7 +157,7 @@ function mostrar(r) {
         etapas.append(li);
     });
 
-    preencherPropriedades($('#dados'), r.dadosExtraidos, ['nome', 'cpf', 'endereco', 'cidade', 'dataEmissao']);
+    preencherPropriedades($('#dados'), r.dadosExtraidos, ['nome', 'cpf', 'endereco', 'cidade', 'cep', 'dataEmissao']);
     const temId = !!r.identificacao;
     $('#bloco-identificacao').hidden = !temId;
     if (temId) {

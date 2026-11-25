@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
+import java.util.Optional;
 
 /** Interpreta o texto do OCR com a OpenAI, pedindo um JSON estruturado com os campos do comprovante. */
 @Service
@@ -54,17 +55,24 @@ public class InterpretadorIaService {
         }
         String original = texto == null ? "" : texto;
         JsonNode campos = json.readTree(chamarOpenAi(Cpf.mascarar(original)));
+        DadosComprovante local = extrator.extrair(original);
+        // o que a IA nao devolver (ou devolver fora do texto) fica com a leitura local
         return new DadosComprovante(
-                noTexto(texto(campos, "nome"), original),
-                extrator.extrair(original).cpf(),
-                noTexto(texto(campos, "endereco"), original),
-                noTexto(texto(campos, "cidade"), original),
-                data(noTexto(texto(campos, "dataEmissao"), original)));
+                ouLocal(noTexto(texto(campos, "nome"), original), local.nome()),
+                local.cpf(),
+                ouLocal(noTexto(texto(campos, "endereco"), original), local.endereco()),
+                ouLocal(noTexto(texto(campos, "cidade"), original), local.cidade()),
+                Optional.ofNullable(data(noTexto(texto(campos, "dataEmissao"), original))).orElse(local.dataEmissao()),
+                local.cep());
     }
 
     /** Fallback sem IA: extracao local por palavra-chave e regex. */
     public DadosComprovante extrairLocal(String texto) {
         return extrator.extrair(texto);
+    }
+
+    private static String ouLocal(String ia, String local) {
+        return ia != null ? ia : local;
     }
 
     /** Anti-alucinacao: so aceita o valor da IA se ele aparece no texto do documento. */
