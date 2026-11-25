@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Banco de Dados</title>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+<nav class="nav" aria-label="Telas">
+    <a href="/" class="nav-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>Validação</a>
+    <a href="/banco.html" class="nav-item ativo" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Banco de Dados</a>
+</nav>
+<main class="pagina larga">
+    <header class="cabecalho">
+        <svg class="icone-titulo" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+        <h1>Banco de Dados</h1>
+        <p class="sub">Todas as validações gravadas, com os dados extraídos de cada documento. Baixe em JSON para migrar para o banco de outro sistema.</p>
+    </header>
+
+    <section class="bloco">
+        <div class="barra">
+            <div class="filtros" role="group" aria-label="Filtrar por status">
+                <button type="button" class="filtro ativo" data-status="">Todos</button>
+                <button type="button" class="filtro" data-status="APROVADO">Aprovados</button>
+                <button type="button" class="filtro" data-status="REPROVADO">Reprovados</button>
+                <button type="button" class="filtro" data-status="REVISAO_MANUAL">Em revisão</button>
+            </div>
+            <input type="search" id="busca" class="busca" placeholder="Buscar por nome, CPF ou arquivo" aria-label="Buscar">
+            <div class="barra-acoes">
+                <button type="button" id="atualizar" class="secundario pequeno">Atualizar</button>
+                <a id="baixar-tudo" class="botao-link primario pequeno" href="/api/banco/exportar" download>Baixar JSON</a>
+            </div>
+        </div>
+        <p id="contagem" class="sub"></p>
+        <div class="tabela-rolagem">
+            <table class="tabela banco">
+                <thead>
+                <tr><th>#</th><th>Arquivo</th><th>Status</th><th>Nome</th><th>CPF</th><th>Cidade</th><th>Pendências</th><th>Quando</th><th></th></tr>
+                </thead>
+                <tbody id="registros"></tbody>
+            </table>
+        </div>
+        <p id="aviso" class="aviso" role="alert" hidden></p>
+    </section>
+</main>
+<script src="banco.js"></script>
+</body>
+</html>
