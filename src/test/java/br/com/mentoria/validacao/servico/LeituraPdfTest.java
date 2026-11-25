@@ -21,7 +21,7 @@ class LeituraPdfTest {
 
     private final ValidacaoDocumentoService service = new ValidacaoDocumentoService(
             new InterpretadorIaService("", new ExtratorTexto()), new ValidadorComprovante(90),
-            new OcrService("tesseract", "", "por"), new OpenCvService(""), new PdfService(),
+            new OcrService("tesseract", "", "por"), new OpenCvService(""), new PdfService(), new ExtratorTexto(),
             mock(ValidacaoRegistroRepository.class));
 
     static byte[] pdf(String... linhas) throws IOException {

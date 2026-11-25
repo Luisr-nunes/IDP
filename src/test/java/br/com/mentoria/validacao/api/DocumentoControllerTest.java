@@ -48,7 +48,7 @@ class DocumentoControllerTest {
                 List.of("Nome identificado"), List.of());
         when(service.validar(any())).thenReturn(new ValidacaoResponse(null, "doc.pdf",
                 List.of(new EtapaPipeline(1, "Documento", "Entrada do arquivo para o pipeline", "doc.pdf")),
-                dados, resultado));
+                dados, null, resultado));
 
         mvc.perform(post("/api/documentos/validar")
                         .contentType(MediaType.APPLICATION_JSON)

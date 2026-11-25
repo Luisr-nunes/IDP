@@ -76,6 +76,15 @@ class RequisicaoInvalidaTest {
     }
 
     @Test
+    void rejeitaIdentificacaoSemConteudoESemMimeTypeValido() throws Exception {
+        validar("{\"mimeType\":\"application/pdf\",\"conteudoDocumento\":\"texto\",\"identificacao\":{\"mimeType\":\"text/plain\"}}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erros", hasItem("Informe conteudoDocumento ou imagemBase64 da identificacao")))
+                .andExpect(jsonPath("$.erros",
+                        hasItem("mimeType da identificacao deve ser application/pdf, image/png ou image/jpeg")));
+    }
+
+    @Test
     void jsonMalFormadoNaoEcoaOConteudoEnviado() throws Exception {
         validar("{\"conteudoDocumento\":\"CPF 529.982.247-25\"")
                 .andExpect(status().isBadRequest())

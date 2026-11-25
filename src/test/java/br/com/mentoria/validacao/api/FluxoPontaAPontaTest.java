@@ -38,17 +38,20 @@ class FluxoPontaAPontaTest {
         MockHttpServletResponse resposta = validar(exemplo);
         JsonNode corpo = json.readTree(resposta.getContentAsString());
 
-        assertEquals(List.of("Documento", "OpenCV", "Tesseract", "IA", "Regras"),
+        assertEquals(List.of("Documento", "OpenCV", "Tesseract", "IA", "Regras", "Banco"),
                 corpo.path("etapas").findValuesAsText("nome"));
-        assertEquals(List.of("1", "2", "3", "4", "5"), corpo.path("etapas").findValuesAsText("ordem"));
-        assertEquals("comprovante-residencia.pdf", corpo.path("etapas").path(0).path("resultado").asText());
+        assertEquals(List.of("1", "2", "3", "4", "5", "6"), corpo.path("etapas").findValuesAsText("ordem"));
+        assertEquals("comprovante-residencia.pdf + cnh.pdf", corpo.path("etapas").path(0).path("resultado").asText());
         assertEquals("Nao executado", corpo.path("etapas").path(1).path("resultado").asText());
-        assertTrue(corpo.path("etapas").path(2).path("resultado").asText().startsWith("OCR nao configurado"));
+        assertTrue(corpo.path("etapas").path(2).path("resultado").asText().startsWith("Comprovante: OCR nao configurado: usando conteudoDocumento"));
         assertTrue(corpo.path("etapas").path(3).path("resultado").asText().contains("extracao local por regex"));
         assertEquals("Joao da Silva", corpo.path("dadosExtraidos").path("nome").asText());
 
         String status = corpo.path("resultado").path("status").asText();
+        assertEquals("APROVADO", status);
         assertEquals(status, corpo.path("etapas").path(4).path("resultado").asText());
+        assertTrue(corpo.path("etapas").path(5).path("resultado").asText().matches("Registro \\d+ salvo"));
+        assertEquals("CNH", corpo.path("identificacao").path("tipo").asText());
 
         JsonNode registro = consultar(resposta.getHeader("Location"));
         assertEquals("comprovante-residencia.pdf", registro.path("nomeArquivo").asText());

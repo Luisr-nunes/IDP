@@ -67,7 +67,7 @@ class ConferenciaERevisaoManualTest {
     @Test
     void falhaDoTesseractCaiNoConteudoDocumento() throws IOException {
         var service = new ValidacaoDocumentoService(new InterpretadorIaService("", new ExtratorTexto()), validador,
-                new OcrService("comando-inexistente-idp", "C:/tessdata", "por"), new OpenCvService(""), new PdfService(), mock(ValidacaoRegistroRepository.class));
+                new OcrService("comando-inexistente-idp", "C:/tessdata", "por"), new OpenCvService(""), new PdfService(), new ExtratorTexto(), mock(ValidacaoRegistroRepository.class));
         String imagem = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3});
 
         var resposta = service.validar(new ValidacaoRequest("doc.png", "image/png", "Nome: Maria Souza", imagem));
