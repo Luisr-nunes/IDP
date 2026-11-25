@@ -3,7 +3,10 @@ package br.com.mentoria.validacao.persistencia;
 import br.com.mentoria.validacao.dominio.ResultadoValidacao;
 import br.com.mentoria.validacao.dominio.RevisaoNaoPermitidaException;
 import br.com.mentoria.validacao.dominio.StatusValidacao;
+import br.com.mentoria.validacao.seguranca.CampoCriptografado;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -50,6 +53,12 @@ public class ValidacaoRegistro {
 
     private Instant revisadoEm;
 
+    /** Dados extraidos (nome, CPF, endereco...) em JSON, gravados cifrados com AES-GCM. Nunca saem no historico. */
+    @JsonIgnore
+    @Convert(converter = CampoCriptografado.class)
+    @Column(length = 4000)
+    private String dadosExtraidos;
+
     protected ValidacaoRegistro() {
     }
 
@@ -74,6 +83,14 @@ public class ValidacaoRegistro {
         this.revisadoManualmente = true;
         this.motivoRevisao = motivo;
         this.revisadoEm = quando;
+    }
+
+    public void guardarDados(String json) {
+        this.dadosExtraidos = json;
+    }
+
+    public String dadosExtraidos() {
+        return dadosExtraidos;
     }
 
     public boolean isRevisadoManualmente() {
